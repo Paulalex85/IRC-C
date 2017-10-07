@@ -14,6 +14,26 @@ typedef struct sockaddr_in sockaddr_in;
 typedef struct hostent hostent;
 typedef struct servent servent;
 
+typedef struct Message {
+	int id;
+	Client *client //identifie l'user qui a envoyé le msg
+	char message[256]; //longueur max de 256 carac
+} Message;
+
+typedef struct Client {
+	struct Client *suiv;
+	int id;
+	char pseudo[30]; //30 carac max pour le pseudo
+} Client;
+
+typedef struct Channel {
+	struct Channel *suiv;
+	Client *listMembre; //les membres du channel
+	Message *listMessage; // les msg du channel
+	int id;
+} Channel;
+	
+
 /*------------------------------------------------------*/
 void renvoi (int sock) {
 
