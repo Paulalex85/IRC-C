@@ -14,6 +14,8 @@ typedef struct sockaddr_in sockaddr_in;
 typedef struct hostent hostent;
 typedef struct servent servent;
 
+//TYPES
+
 typedef struct Message {
 	int id;
 	Client *client //identifie l'user qui a envoyé le msg
@@ -33,9 +35,13 @@ typedef struct Channel {
 	int id;
 } Channel;
 	
+void nouveau_client(Client *list,char pseudo[30])
+{
+	
+}
 
 /*------------------------------------------------------*/
-void renvoi (int sock) {
+void gestion_message (int sock) {
 
     char buffer[256];
     int longueur;
@@ -45,21 +51,7 @@ void renvoi (int sock) {
     
     printf("message lu : %s \n", buffer);
     
-    buffer[0] = 'R';
-    buffer[1] = 'E';
-    buffer[longueur] = '#';
-    buffer[longueur+1] ='\0';
-    
-    printf("message apres traitement : %s \n", buffer);
-    
-    printf("renvoi du message traite.\n");
-
-    /* mise en attente du prgramme pour simuler un delai de transmission */
-    sleep(3);
-    
-    write(sock,buffer,strlen(buffer)+1);
-    
-    printf("message envoye. \n");
+    //write(sock,buffer,strlen(buffer)+1);
         
     return;
     
@@ -79,6 +71,9 @@ main(int argc, char **argv) {
     char 		machine[TAILLE_MAX_NOM+1]; 	/* nom de la machine locale */
     
     gethostname(machine,TAILLE_MAX_NOM);		/* recuperation du nom de la machine */
+
+	Client *listClient = (Client*) malloc(sizeof(Client));
+	Channel *listChannel = (Channel*) malloc(sizeof(Channel));
     
     /* recuperation de la structure d'adresse en utilisant le nom */
     if ((ptr_hote = gethostbyname(machine)) == NULL) {
@@ -138,9 +133,8 @@ main(int argc, char **argv) {
 		
 		/* traitement du message */
 		printf("reception d'un message.\n");
-		
-		//BEGIN HERE
-		renvoi(nouv_socket_descriptor);
+
+		gestion_message(nouv_socket_descriptor);
 						
 		close(nouv_socket_descriptor);
 		
