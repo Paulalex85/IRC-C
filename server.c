@@ -19,7 +19,7 @@ typedef struct servent servent;
 typedef struct Message {
 	int id;
 	Client *client //identifie l'user qui a envoyé le msg
-	char message[254]; //longueur max de 254 carac
+	char message[256]; //longueur max de 256 carac
 } Message;
 
 typedef struct Client {
@@ -34,6 +34,13 @@ typedef struct Channel {
 	Message *listMessage; // les msg du channel
 	int id;
 } Channel;
+
+typedef struct Requete { // struct a echanger avec client
+	int instruction;
+	char text[256];
+	int id;
+}
+	
 	
 void nouveau_client(Client *list,int *nbclient, char pseudo[])
 {
@@ -54,17 +61,18 @@ void gestion_message (int sock, Client *listClient, int *nbclient) {
    
     if ((longueur = read(sock, buffer, sizeof(buffer))) <= 0) 
     	return;
-    
-    printf("message lu : %s \n", buffer);
 
-	/*int code = atoi(buffer[0]);
+	Requete r;
+	recv(sock, &r, sizeof(r),0); // assign la requete a r
 
-	switch(code) {
+
+	switch(r.instruction) {
 		case 1:
-			nouveau_client(listClient, nbclient, 
-	}*/
-    
-    //write(sock,buffer,strlen(buffer)+1);
+			nouveau_client(listClient, nbclient, r.text);
+			break;
+		default:
+			return;
+	}
         
     return;
     
