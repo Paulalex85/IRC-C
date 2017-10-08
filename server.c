@@ -19,7 +19,7 @@ typedef struct servent servent;
 typedef struct Message {
 	int id;
 	Client *client //identifie l'user qui a envoyé le msg
-	char message[256]; //longueur max de 256 carac
+	char message[254]; //longueur max de 254 carac
 } Message;
 
 typedef struct Client {
@@ -35,13 +35,19 @@ typedef struct Channel {
 	int id;
 } Channel;
 	
-void nouveau_client(Client *list,char pseudo[30])
+void nouveau_client(Client *list,int *nbclient, char pseudo[])
 {
-	
+	Client *new = malloc(sizeof(*Client)); //crée new
+	*nbclient = nbclient++; //incrémente l'id
+	new->id = *nbclient; // assigne l'id
+	strcpy(new->pseudo, pseudo); // copie le pseudo
+	new->suiv = list; // on pointe le premier de la liste dans le suivant du nouveau
+	list = new; // on fait pointer le début de la liste sur le nouveau
+	printf("ajout de l'user ok\n");
 }
 
 /*------------------------------------------------------*/
-void gestion_message (int sock) {
+void gestion_message (int sock, Client *listClient, int *nbclient) {
 
     char buffer[256];
     int longueur;
@@ -50,6 +56,13 @@ void gestion_message (int sock) {
     	return;
     
     printf("message lu : %s \n", buffer);
+
+	/*int code = atoi(buffer[0]);
+
+	switch(code) {
+		case 1:
+			nouveau_client(listClient, nbclient, 
+	}*/
     
     //write(sock,buffer,strlen(buffer)+1);
         
@@ -74,6 +87,9 @@ main(int argc, char **argv) {
 
 	Client *listClient = (Client*) malloc(sizeof(Client));
 	Channel *listChannel = (Channel*) malloc(sizeof(Channel));
+	int nb_messages = 0;
+	int nb_channels = 0;
+	int nb_clients = 0;
     
     /* recuperation de la structure d'adresse en utilisant le nom */
     if ((ptr_hote = gethostbyname(machine)) == NULL) {
