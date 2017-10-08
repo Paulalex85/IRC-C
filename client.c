@@ -48,23 +48,12 @@ int main(int argc, char **argv) {
     bcopy((char*)ptr_host->h_addr, (char*)&adresse_locale.sin_addr, ptr_host->h_length);
     adresse_locale.sin_family = AF_INET; /* ou ptr_host->h_addrtype; */
     
-    /* 2 facons de definir le service que l'on va utiliser a distance */
-    /* (commenter l'une ou l'autre des solutions) */
-    
     /*-----------------------------------------------------------*/
-    /* SOLUTION 1 : utiliser un service existant, par ex. "irc" */
-    /*
     if ((ptr_service = getservbyname("irc","tcp")) == NULL) {
 	perror("erreur : impossible de recuperer le numero de port du service desire.");
 	exit(1);
     }
     adresse_locale.sin_port = htons(ptr_service->s_port);
-    */
-    /*-----------------------------------------------------------*/
-    
-    /*-----------------------------------------------------------*/
-    /* SOLUTION 2 : utiliser un nouveau numero de port */
-    adresse_locale.sin_port = htons(5000);
     /*-----------------------------------------------------------*/
     
     printf("numero de port pour la connexion au serveur : %d \n", ntohs(adresse_locale.sin_port));
@@ -90,9 +79,6 @@ int main(int argc, char **argv) {
 	perror("erreur : impossible d'ecrire le message destine au serveur.");
 	exit(1);
     }
-    
-    /* mise en attente du prgramme pour simuler un delai de transmission */
-    sleep(3);
      
     printf("message envoye au serveur. \n");
                 
