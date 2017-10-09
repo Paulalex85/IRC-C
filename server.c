@@ -49,9 +49,40 @@ void nouveau_client(Client *list,int *nbclient, char pseudo[])
 	*nbclient = nbclient++; //incrémente l'id
 	new->id = *nbclient; // assigne l'id
 	strcpy(new->pseudo, pseudo); // copie le pseudo
-	new->suiv = list; // on pointe le premier de la liste dans le suivant du nouveau
+	if(list == NULL) {
+		new->suiv = NULL;
+	else{
+		new->suiv = list; // on pointe le premier de la liste dans le suivant du nouveau
+	}
 	list = new; // on fait pointer le début de la liste sur le nouveau
 	printf("ajout de l'user ok\n");
+}
+
+void supprimer_client(Client *list,int id_client)
+{
+	Client *aux;
+	Client *pre; 
+	if(list != NULL) {
+		if(list->id == id_client) {
+			aux = list;
+			list= list->suiv;
+			free(aux);
+		}
+		else {
+			aux = list->suiv;
+			pre = list;
+			while(aux != NULL) {
+				if(aux->id == id_client){
+					pre->suiv = aux->suiv;
+					free(aux);
+				}
+				else{
+					pre = aux;
+					aux = aux->suiv;
+				}
+			}
+		}
+	}
 }
 
 int creer_channel(Channel *list,int *nbchannel char nom[]) //retourne l'id du channel
