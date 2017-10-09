@@ -126,6 +126,13 @@ void supprimer_channel(Channel *list,int id_channel)
 	}
 }
 
+void supprimer_message(Message *list)//supprime le premier de la liste 
+{
+	Message *aux = list;
+	list = list->suiv;
+	free(aux); 
+}
+
 /*------------------------------------------------------*/
 void gestion_message (int sock, Client *listClient, int *nbclient) {
 
