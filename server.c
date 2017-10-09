@@ -99,6 +99,33 @@ int creer_channel(Channel *list,int *nbchannel char nom[]) //retourne l'id du ch
 	return id_new;
 }
 
+void supprimer_channel(Channel *list,int id_channel)
+{
+	Client *aux;
+	Client *pre; 
+	if(list != NULL) {
+		if(list->id == id_channel) {
+			aux = list;
+			list= list->suiv;
+			free(aux);
+		}
+		else {
+			aux = list->suiv;
+			pre = list;
+			while(aux != NULL) {
+				if(aux->id == id_channel){
+					pre->suiv = aux->suiv;
+					free(aux);
+				}
+				else{
+					pre = aux;
+					aux = aux->suiv;
+				}
+			}
+		}
+	}
+}
+
 /*------------------------------------------------------*/
 void gestion_message (int sock, Client *listClient, int *nbclient) {
 
