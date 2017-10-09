@@ -32,6 +32,7 @@ typedef struct Channel {
 	struct Channel *suiv;
 	Client *listMembre; //les membres du channel
 	Message *listMessage; // les msg du channel
+	char nom[30];
 	int id;
 } Channel;
 
@@ -51,6 +52,20 @@ void nouveau_client(Client *list,int *nbclient, char pseudo[])
 	new->suiv = list; // on pointe le premier de la liste dans le suivant du nouveau
 	list = new; // on fait pointer le début de la liste sur le nouveau
 	printf("ajout de l'user ok\n");
+}
+
+int creer_channel(Channel *list,int *nbchannel char nom[]) //retourne l'id du channel
+{
+	int id_new = -1;
+	Channel *new = (Channel*) malloc(sizeof(Channel)); //crée new
+	id_new = (*nbchannel) + 1; //incrémente l'id
+	*nbchannel = id_new; //assigne a la valeur de programme principal
+	new->id = id_new; // assigne l'id
+	strcpy(new->nom, nom); // copie le nom
+	new->suiv = list; // on pointe le premier de la liste dans le suivant du nouveau
+	list = new; // on fait pointer le début de la liste sur le nouveau
+	printf("ajout de l'user ok\n");
+	return id_new;
 }
 
 /*------------------------------------------------------*/
