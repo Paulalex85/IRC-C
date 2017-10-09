@@ -56,15 +56,9 @@ void nouveau_client(Client *list,int *nbclient, char pseudo[])
 /*------------------------------------------------------*/
 void gestion_message (int sock, Client *listClient, int *nbclient) {
 
-    char buffer[256];
-    int longueur;
-   
-    if ((longueur = read(sock, buffer, sizeof(buffer))) <= 0) 
-    	return;
-
 	Requete r;
-	recv(sock, &r, sizeof(r),0); // assign la requete a r
-
+	if(recv(sock, &r, sizeof(r),0) <=0) // assign la requete a r
+		return;
 
 	switch(r.instruction) {
 		case 1:
@@ -75,7 +69,6 @@ void gestion_message (int sock, Client *listClient, int *nbclient) {
 	}
         
     return;
-    
 }
 /*------------------------------------------------------*/
 
