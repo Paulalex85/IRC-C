@@ -23,6 +23,7 @@ typedef struct Client {
 } Client;
 
 typedef struct Message {
+	struct Message *suiv;
 	int id;
 	Client *client; //identifie l'user qui a envoyé le msg
 	char message[256]; //longueur max de 256 carac
@@ -30,7 +31,7 @@ typedef struct Message {
 
 typedef struct Channel {
 	struct Channel *suiv;
-	Client *listMembre; //les membres du channel
+	Client *listClient // liste des membres du channel
 	Message *listMessage; // les msg du channel
 	char nom[30];
 	int id;
@@ -75,6 +76,7 @@ void supprimer_client(Client *list,int id_client)
 				if(aux->id == id_client){
 					pre->suiv = aux->suiv;
 					free(aux);
+					break;
 				}
 				else{
 					pre = aux;
@@ -97,6 +99,42 @@ int creer_channel(Channel *list,int *nbchannel char nom[]) //retourne l'id du ch
 	list = new; // on fait pointer le début de la liste sur le nouveau
 	printf("ajout de l'user ok\n");
 	return id_new;
+}
+
+int ajout_client_channel(Channel *channel, Client *list, int id_client) // retourne 1 ou 0 si fait ou non
+{
+	int fait = 0;
+	Client *move = NULL;
+	Client *aux; 
+	Client *pre;
+	if(list != NULL) {
+		if(list->id == id_client) {
+			move = list;//transfert
+			list = list->suiv;//enleve le client de la list générale
+		}
+		else{
+			pre = list;
+			aux = list->suiv;
+			while(aux != NULL){
+				if(aux->id == id_client){
+					move = aux;//transfert 
+					pre->suiv = aux->suiv; //enleve de la liste
+					break;
+				}
+				else {
+					pre = aux;
+					aux = aux->suiv;
+				}
+			}
+		}
+		if(move != NULL) {
+			fait = 1;
+			aux = (*channel).listClient;//prend la tete de la liste du channel
+			move->suiv = aux;//affecte la liste apres le client a ajouter
+			(*channel).listClient = move;
+		}
+	}
+	return fait;
 }
 
 void supprimer_channel(Channel *list,int id_channel)
