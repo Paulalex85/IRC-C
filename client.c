@@ -16,11 +16,18 @@ typedef struct servent 		servent;
 
 //TYPES
 
-typedef struct Requete { // struct a echanger avec serveur
-	int instruction;
-	char text[256];
+typedef struct Client {
+	struct Client *suiv;
 	int id;
-} Requete;
+	char pseudo[30]; //30 carac max pour le pseudo
+} Client;
+
+typedef struct Message {
+	struct Message *suiv;
+	int id;
+	int  id_client; //identifie l'user qui a envoyé le msg
+	char message[256]; //longueur max de 256 carac
+} Message;
 
 typedef struct Channel {
 	struct Channel *suiv;
@@ -28,7 +35,14 @@ typedef struct Channel {
 	Message *listMessage; // les msg du channel
 	char nom[30];
 	int id;
+	int nb_client; 
 } Channel;
+
+typedef struct Requete { // struct a echanger avec client
+	int instruction;
+	char text[256];
+	int id;
+} Requete;
 
 int main(int argc, char **argv) {
   
