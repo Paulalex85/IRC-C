@@ -44,6 +44,44 @@ typedef struct Requete { // struct a echanger avec client
 	int id;
 } Requete;
 
+//id des requetes
+// 1 : pseudo user -> création server 
+// 2 : creation channel
+// 3 : join channel
+// 4 : leave channel
+
+void ajouter_channel(int id_user) {
+	printf("Nom Channel? \n");
+
+	Requete r;
+	r.instruction = 2;
+	r.id = id_user;
+	scanf("%s", &r.text);
+}
+
+void creation_user() {
+	printf("Pseudo? \n");
+
+	Requete r;
+	r.instruction = 1;
+	r.id = 0;
+	scanf("%s", &r.text);
+      
+    /* envoi du message vers le serveur */
+    if ((send(socket_descriptor, &r, sizeof(r),0)) < 0) {
+		perror("erreur : impossible d'ecrire le message destine au serveur.");
+		exit(1);
+    }
+     
+    printf("message envoye au serveur. \n");
+                
+    /* lecture de la reponse en provenance du serveur */
+    while((longueur = read(socket_descriptor, buffer, sizeof(buffer))) > 0) {
+		printf("reponse du serveur : \n");
+		write(1,buffer,longueur);
+    }
+}
+
 int main(int argc, char **argv) {
   
     int 	socket_descriptor, 	/* descripteur de socket */
@@ -56,6 +94,10 @@ int main(int argc, char **argv) {
     char *	host; 			/* nom de la machine distante */
     char *	mesg; 			/* message envoyé */
 	char	pseudo[30]; // pseudo de l'utilisateur
+
+	Message *listMessage; // messages du channel rejoind
+	Channel *listChannel; // liste des channels
+	int id_user; //id de l'utilisateur 
      
     if (argc != 2) {
 	perror("usage : client <adresse-serveur>");
@@ -101,26 +143,7 @@ int main(int argc, char **argv) {
     
     printf("connexion etablie avec le serveur. \n");
     
-    printf("Pseudo? \n");
-
-	Requete r;
-	r.instruction = 1;
-	r.id = 0;
-	scanf("%s", &r.text);
-      
-    /* envoi du message vers le serveur */
-    if ((send(socket_descriptor, &r, sizeof(r),0)) < 0) {
-		perror("erreur : impossible d'ecrire le message destine au serveur.");
-		exit(1);
-    }
-     
-    printf("message envoye au serveur. \n");
-                
-    /* lecture de la reponse en provenance du serveur */
-    while((longueur = read(socket_descriptor, buffer, sizeof(buffer))) > 0) {
-		printf("reponse du serveur : \n");
-		write(1,buffer,longueur);
-    }
+    creation_user();
     
     printf("\nfin de la reception.\n");
     
