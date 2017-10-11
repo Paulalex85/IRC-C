@@ -31,7 +31,7 @@ typedef struct Message {
 
 typedef struct Channel {
 	struct Channel *suiv;
-	Client *listClient // liste des membres du channel
+	Client *listClient; // liste des membres du channel
 	Message *listMessage; // les msg du channel
 	char nom[30];
 	int id;
@@ -52,6 +52,7 @@ void nouveau_client(Client *list,int *nbclient, char pseudo[])
 	strcpy(new->pseudo, pseudo); // copie le pseudo
 	if(list == NULL) {
 		new->suiv = NULL;
+	}
 	else{
 		new->suiv = list; // on pointe le premier de la liste dans le suivant du nouveau
 	}
@@ -87,7 +88,7 @@ void supprimer_client(Client *list,int id_client)
 	}
 }
 
-int creer_channel(Channel *list,int *nbchannel char nom[]) //retourne l'id du channel
+int creer_channel(Channel *list,int *nbchannel, char nom[]) //retourne l'id du channel
 {
 	int id_new = -1;
 	Channel *new = (Channel*) malloc(sizeof(Channel)); //crée new
