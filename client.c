@@ -22,6 +22,14 @@ typedef struct Requete { // struct a echanger avec serveur
 	int id;
 } Requete;
 
+typedef struct Channel {
+	struct Channel *suiv;
+	Client *listClient; // liste des membres du channel
+	Message *listMessage; // les msg du channel
+	char nom[30];
+	int id;
+} Channel;
+
 int main(int argc, char **argv) {
   
     int 	socket_descriptor, 	/* descripteur de socket */

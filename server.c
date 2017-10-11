@@ -25,7 +25,7 @@ typedef struct Client {
 typedef struct Message {
 	struct Message *suiv;
 	int id;
-	Client *client; //identifie l'user qui a envoyé le msg
+	int  id_client; //identifie l'user qui a envoyé le msg
 	char message[256]; //longueur max de 256 carac
 } Message;
 
@@ -35,6 +35,7 @@ typedef struct Channel {
 	Message *listMessage; // les msg du channel
 	char nom[30];
 	int id;
+	int nb_client; 
 } Channel;
 
 typedef struct Requete { // struct a echanger avec client
@@ -95,6 +96,7 @@ int creer_channel(Channel *list,int *nbchannel, char nom[]) //retourne l'id du c
 	id_new = (*nbchannel) + 1; //incrémente l'id
 	*nbchannel = id_new; //assigne a la valeur de programme principal
 	new->id = id_new; // assigne l'id
+	new->nb_client = 0;
 	strcpy(new->nom, nom); // copie le nom
 	new->suiv = list; // on pointe le premier de la liste dans le suivant du nouveau
 	list = new; // on fait pointer le début de la liste sur le nouveau
