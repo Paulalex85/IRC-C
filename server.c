@@ -58,7 +58,7 @@ void nouveau_client(Client *list,int *nbclient, char pseudo[])
 		new->suiv = list; // on pointe le premier de la liste dans le suivant du nouveau
 	}
 	list = new; // on fait pointer le début de la liste sur le nouveau
-	printf("ajout de l'user ok\n");
+	printf("ajout de l'user : %s \n", pseudo);
 }
 
 void supprimer_client(Client *list,int id_client)

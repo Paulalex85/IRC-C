@@ -59,19 +59,19 @@ void ajouter_channel(int id_user) {
 	scanf("%s", &r.text);
 }
 
-const char* creation_user(int *id_user) {
+const char* creation_user(int socket, int *id_user) {
 	printf("Pseudo? \n");
 
 	Requete r;
 	r.instruction = 1;
-	r.id = 0;
+	r.id = -1;
 	scanf("%s", &r.text);
 	
 	char pseudo[30];
 	strcpy(pseudo, r.text); 
       
     /* envoi du message vers le serveur */
-    if ((send(socket_descriptor, &r, sizeof(r),0)) < 0) {
+    if ((send(socket, &r, sizeof(r),0)) < 0) {
 		perror("erreur : impossible d'ecrire le message destine au serveur.");
 		exit(1);
     }
@@ -79,9 +79,10 @@ const char* creation_user(int *id_user) {
     printf("message envoye au serveur. \n");
                 
     /* lecture de la reponse en provenance du serveur */
-
-	if ((recv(socket_descriptor, &r, sizeof(r),0)) > 0) {
-		*id_user = r.id;
+	while (r.id == -1){
+		if ((recv(socket, &r, sizeof(r),0)) > 0) {
+			*id_user = r.id;
+		}
 	}
 	return pseudo;
 }
@@ -97,7 +98,7 @@ int main(int argc, char **argv) {
     char *	prog; 			/* nom du programme */
     char *	host; 			/* nom de la machine distante */
     char *	mesg; 			/* message envoyé */
-	char	pseudo[30]; // pseudo de l'utilisateur
+	const char * pseudo; // pseudo de l'utilisateur
 
 	Message *listMessage; // messages du channel rejoind
 	Channel *listChannel; // liste des channels
@@ -147,7 +148,8 @@ int main(int argc, char **argv) {
     
     printf("connexion etablie avec le serveur. \n");
     
-    pseudo = creation_user(&id_user);
+    pseudo = creation_user(socket_descriptor, &id_user);
+	printf("id user : %d", id_user);
     
     printf("\nfin de la reception.\n");
     
