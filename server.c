@@ -98,7 +98,7 @@ void supprimer_client(Client *list,int id_client)
 	}
 }
 
-int creer_channel(Channel *list,int *nbchannel, char nom[]) //retourne l'id du channel
+int creer_channel(Channel *list,int *nbchannel, char nom[], int socket) //retourne l'id du channel
 {
 	int id_new = -1;
 	Channel *new = (Channel*) malloc(sizeof(Channel)); //crée new
@@ -109,7 +109,17 @@ int creer_channel(Channel *list,int *nbchannel, char nom[]) //retourne l'id du c
 	strcpy(new->nom, nom); // copie le nom
 	new->suiv = list; // on pointe le premier de la liste dans le suivant du nouveau
 	list = new; // on fait pointer le début de la liste sur le nouveau
-	printf("ajout de l'user ok\n");
+	printf("ajout du channel %s ok\n", new->nom);
+
+
+	//envoie au client 
+	Requete r;
+	r.id = new->id;
+	if ((send(socket, &r, sizeof(r),0)) < 0) {
+		perror("erreur : impossible d'ecrire le message destine au serveur.");
+		exit(1);
+    }
+	printf("ajout du channel : %s id: %d \n", new->nom, new->id);
 	return id_new;
 }
 

@@ -50,13 +50,36 @@ typedef struct Requete { // struct a echanger avec client
 // 3 : join channel
 // 4 : leave channel
 
-void ajouter_channel(int id_user) {
-	printf("Nom Channel? \n");
+int ajouter_channel(int id_user, int socket) { // retourne id channel
 
 	Requete r;
 	r.instruction = 2;
 	r.id = id_user;
+	printf("Nom Channel? \n");
 	scanf("%s", &r.text);
+
+	/* envoi du message vers le serveur */
+    if ((send(socket, &r, sizeof(r),0)) < 0) {
+		perror("erreur : impossible d'ecrire le message destine au serveur.");
+		exit(1);
+    }
+     
+    printf("ajout envoye au serveur. \n");
+
+	r.id = -1;
+	/* lecture de la reponse en provenance du serveur */
+	if ((recv(socket, &r, sizeof(r),0)) > 0) {
+		if(r.id != -1){
+			printf("Channel cree");
+		}
+		else {
+			printf("probleme de creation du channel");
+		}
+	}
+	else{
+		printf("probleme serveur ");
+	}
+	return r.id;
 }
 
 const char* creation_user(int socket, int *id_user) {
@@ -76,7 +99,7 @@ const char* creation_user(int socket, int *id_user) {
 		exit(1);
     }
      
-    printf("message envoye au serveur. \n");
+    printf("pseudo envoye au serveur. \n");
                 
     /* lecture de la reponse en provenance du serveur */
 	while (r.id == -1){
@@ -150,6 +173,22 @@ int main(int argc, char **argv) {
     
     pseudo = creation_user(socket_descriptor, &id_user);
 	printf("id user : %d", id_user);
+
+	printf("Action ?");
+	printf("1 - Ajouter channel");
+
+	int value_user;
+	scanf("%d", &value_user);
+
+	switch(value_user){
+		case 1: 
+			if(ajouter_channel(id_user,socket_descriptor) == 1)
+			{
+				printf("ajouter suite");
+			}
+			break;
+		default: break;
+	}
     
     printf("\nfin de la reception.\n");
     
