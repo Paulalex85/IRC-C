@@ -45,10 +45,10 @@ typedef struct Requete { // struct a echanger avec client
 } Requete;
 	
 	
-void nouveau_client(Client *list,int *nbclient, char pseudo[])
+void nouveau_client(Client *list,int *nbclient, char pseudo[], int socket)
 {
 	Client *new = (Client*) malloc(sizeof(Client)); //crée new
-	*nbclient = nbclient++; //incrémente l'id
+	*nbclient = (*nbclient) +1; //incrémente l'id
 	new->id = *nbclient; // assigne l'id
 	strcpy(new->pseudo, pseudo); // copie le pseudo
 	if(list == NULL) {
@@ -58,7 +58,16 @@ void nouveau_client(Client *list,int *nbclient, char pseudo[])
 		new->suiv = list; // on pointe le premier de la liste dans le suivant du nouveau
 	}
 	list = new; // on fait pointer le début de la liste sur le nouveau
-	printf("ajout de l'user : %s \n", pseudo);
+
+	Requete r;
+	r.instruction = 1;
+	r.id = new->id;
+
+	if ((send(socket, &r, sizeof(r),0)) < 0) {
+		perror("erreur : impossible d'ecrire le message destine au serveur.");
+		exit(1);
+    }
+	printf("ajout de l'user : %s id: %d \n", pseudo, new->id);
 }
 
 void supprimer_client(Client *list,int id_client)
@@ -142,8 +151,8 @@ int ajout_client_channel(Channel *channel, Client *list, int id_client) // retou
 
 void supprimer_channel(Channel *list,int id_channel)
 {
-	Client *aux;
-	Client *pre; 
+	Channel *aux;
+	Channel *pre; 
 	if(list != NULL) {
 		if(list->id == id_channel) {
 			aux = list;
@@ -183,7 +192,7 @@ void gestion_message (int sock, Client *listClient, int *nbclient) {
 
 	switch(r.instruction) {
 		case 1:
-			nouveau_client(listClient, nbclient, r.text);
+			nouveau_client(listClient, nbclient, r.text, sock);
 			break;
 		default:
 			return;
@@ -194,7 +203,7 @@ void gestion_message (int sock, Client *listClient, int *nbclient) {
 /*------------------------------------------------------*/
 
 /*------------------------------------------------------*/
-main(int argc, char **argv) {
+int main(int argc, char **argv) {
   
     int 		socket_descriptor, 		/* descripteur de socket */
 			nouv_socket_descriptor, 	/* [nouveau] descripteur de socket */
