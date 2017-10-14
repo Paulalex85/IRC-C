@@ -98,7 +98,7 @@ void supprimer_client(Client *list,int id_client)
 	}
 }
 
-int creer_channel(Channel *list,int *nbchannel, char nom[], int socket) //retourne l'id du channel
+void creer_channel(Channel *list,int *nbchannel, char nom[], int socket)
 {
 	int id_new = -1;
 	Channel *new = (Channel*) malloc(sizeof(Channel)); //crée new
@@ -116,11 +116,10 @@ int creer_channel(Channel *list,int *nbchannel, char nom[], int socket) //retour
 	Requete r;
 	r.id = new->id;
 	if ((send(socket, &r, sizeof(r),0)) < 0) {
-		perror("erreur : impossible d'ecrire le message destine au serveur.");
+		perror("erreur : impossible d'ecrire le message destine au client.");
 		exit(1);
     }
 	printf("ajout du channel : %s id: %d \n", new->nom, new->id);
-	return id_new;
 }
 
 int ajout_client_channel(Channel *channel, Client *list, int id_client) // retourne 1 ou 0 si fait ou non
@@ -194,15 +193,20 @@ void supprimer_message(Message *list)//supprime le premier de la liste
 }
 
 /*------------------------------------------------------*/
-void gestion_message (int sock, Client *listClient, int *nbclient) {
+void gestion_message (int sock, Client *listClient, int *nbclient, Channel *listChannel, int *nbchannel) {
 
 	Requete r;
 	if(recv(sock, &r, sizeof(r),0) <=0) // assign la requete a r
 		return;
 
+	printf("Requete de type %d \n", r.instruction);
+
 	switch(r.instruction) {
 		case 1:
 			nouveau_client(listClient, nbclient, r.text, sock);
+			break;
+		case 2:
+			creer_channel(listChannel, nbchannel, r.text, sock);
 			break;
 		default:
 			return;
@@ -291,9 +295,9 @@ int main(int argc, char **argv) {
 		/* traitement du message */
 		printf("reception d'un message.\n");
 
-		gestion_message(nouv_socket_descriptor, listClient, &nb_clients);
+		gestion_message(nouv_socket_descriptor, listClient, &nb_clients,listChannel, &nb_channels);
 						
-		close(nouv_socket_descriptor);
+		//close(nouv_socket_descriptor);
 		
     }
     

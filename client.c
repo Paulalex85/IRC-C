@@ -49,10 +49,12 @@ typedef struct Requete { // struct a echanger avec client
 // 2 : creation channel
 // 3 : join channel
 // 4 : leave channel
+// 5 : get channels
 
 int ajouter_channel(int id_user, int socket) { // retourne id channel
 
 	Requete r;
+	int found = 0;
 	r.instruction = 2;
 	r.id = id_user;
 	printf("Nom Channel? \n");
@@ -68,18 +70,56 @@ int ajouter_channel(int id_user, int socket) { // retourne id channel
 
 	r.id = -1;
 	/* lecture de la reponse en provenance du serveur */
-	if ((recv(socket, &r, sizeof(r),0)) > 0) {
-		if(r.id != -1){
-			printf("Channel cree");
+	while (found == 0){
+		if ((recv(socket, &r, sizeof(r),0)) > 0) {
+			found = 1;
+			if(r.id != -1){
+				printf("Channel cree");
+			}
+			else {
+				printf("probleme de creation du channel");
+			}
 		}
-		else {
-			printf("probleme de creation du channel");
-		}
-	}
-	else{
-		printf("probleme serveur ");
 	}
 	return r.id;
+}
+
+int is_in_list_channel(Channel c, Channel* listChannel) {
+	Channel *aux;
+	aux = listChannel;
+	while (aux != NULL) {
+		if(aux->id == c.id) {
+			return 1;
+		}	
+		else{
+			aux = aux->suiv;
+		}	
+	}
+	return 0;
+}
+
+void get_list_channel(Channel *listChannel, int socket) {
+	Channel c;	
+	Requete r;
+	r.instruction = 5;
+	
+	/* envoi du message vers le serveur */
+    if ((send(socket, &r, sizeof(r),0)) < 0) {
+		perror("erreur : impossible d'ecrire le message destine au serveur.");
+		exit(1);
+    }
+
+	while(recv(socket, &c, sizeof(c),0) > 0) {
+		if (is_in_list_channel(c,listChannel) == 0) {
+			Channel *new = (Channel*) malloc(sizeof(Channel)); // cr
+			new->id = c.id;
+			new->nb_client = c.nb_client;
+			strcpy(new->nom, c.nom);
+
+			new->suiv = listChannel;
+			listChannel = new;
+		}
+	}
 }
 
 const char* creation_user(int socket, int *id_user) {
@@ -123,8 +163,8 @@ int main(int argc, char **argv) {
     char *	mesg; 			/* message envoyé */
 	const char * pseudo; // pseudo de l'utilisateur
 
-	Message *listMessage; // messages du channel rejoind
-	Channel *listChannel; // liste des channels
+	Message *listMessage = NULL; // messages du channel rejoind
+	Channel *listChannel = NULL; // liste des channels
 	int id_user; //id de l'utilisateur 
      
     if (argc != 2) {
@@ -172,10 +212,10 @@ int main(int argc, char **argv) {
     printf("connexion etablie avec le serveur. \n");
     
     pseudo = creation_user(socket_descriptor, &id_user);
-	printf("id user : %d", id_user);
+	printf("id user : %d \n", id_user);
 
-	printf("Action ?");
-	printf("1 - Ajouter channel");
+	printf("Action ?\n");
+	printf("1 - Ajouter channel\n");
 
 	int value_user;
 	scanf("%d", &value_user);
