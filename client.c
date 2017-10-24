@@ -124,7 +124,7 @@ void get_list_channel(Channel *listChannel, int socket) {
 
 void fin_connection(int socket) {
 	Requete r;
-	r.id = 7;
+	r.instruction = 7;
 	if ((send(socket, &r, sizeof(r),0)) < 0) { // message pour finir la connection avec le server
 		perror("erreur : impossible d'ecrire le message destine au serveur.");
 		exit(1);
