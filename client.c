@@ -122,6 +122,15 @@ void get_list_channel(Channel *listChannel, int socket) {
 	}
 }
 
+void fin_connection(int socket) {
+	Requete r;
+	r.id = 7;
+	if ((send(socket, &r, sizeof(r),0)) < 0) { // message pour finir la connection avec le server
+		perror("erreur : impossible d'ecrire le message destine au serveur.");
+		exit(1);
+    }
+}
+
 const char* creation_user(int socket, int *id_user) {
 	printf("Pseudo? \n");
 
@@ -215,16 +224,20 @@ int main(int argc, char **argv) {
 	printf("id user : %d \n", id_user);
 
 	printf("Action ?\n");
+	printf("0 - Quitter\n");
 	printf("1 - Ajouter channel\n");
 
 	int value_user;
 	scanf("%d", &value_user);
 
 	switch(value_user){
+		case 0:
+			fin_connection(socket_descriptor);
+			break;
 		case 1: 
 			if(ajouter_channel(id_user,socket_descriptor) == 1)
 			{
-				printf("ajouter suite");
+				printf("ajouter suite\n");
 			}
 			break;
 		default: break;

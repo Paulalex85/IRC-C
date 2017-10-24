@@ -196,23 +196,25 @@ void supprimer_message(Message *list)//supprime le premier de la liste
 void gestion_message (int sock, Client *listClient, int *nbclient, Channel *listChannel, int *nbchannel) {
 
 	Requete r;
-	if(recv(sock, &r, sizeof(r),0) <=0) // assign la requete a r
-		return;
+	int i = 1; 
+	while (i == 1) { 
+		if(recv(sock, &r, sizeof(r),0) > 0) { // assign la requete a 
+			printf("Requete de type %d \n", r.instruction);
 
-	printf("Requete de type %d \n", r.instruction);
-
-	switch(r.instruction) {
-		case 1:
-			nouveau_client(listClient, nbclient, r.text, sock);
-			break;
-		case 2:
-			creer_channel(listChannel, nbchannel, r.text, sock);
-			break;
-		default:
-			return;
+			switch(r.instruction) {
+				case 1:
+					nouveau_client(listClient, nbclient, r.text, sock);
+					break;
+				case 2:
+					creer_channel(listChannel, nbchannel, r.text, sock);
+					break;
+				case 7: //Id d'instruction pour fermer la connection 
+					return;
+				default:
+					return;
+			}
+		}
 	}
-        
-    return;
 }
 /*------------------------------------------------------*/
 
