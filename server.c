@@ -1,5 +1,6 @@
 /*----------------------------------------------
 Serveur à lancer avant le client
+gcc IRC-C/server.c -lpthread -o server
 ------------------------------------------------*/
 #include <stdlib.h>
 #include <stdio.h>
@@ -7,6 +8,7 @@ Serveur à lancer avant le client
 #include <sys/socket.h>
 #include <netdb.h> 		/* pour hostent, servent */
 #include <string.h> 		/* pour bcopy, ... */  
+#include <pthread.h>
 #define TAILLE_MAX_NOM 256
 
 typedef struct sockaddr sockaddr;
@@ -193,9 +195,22 @@ void supprimer_message(Message *list)//supprime le premier de la liste
 }
 
 /*------------------------------------------------------*/
-void gestion_message (int sock, Client *listClient, int *nbclient, Channel *listChannel, int *nbchannel) {
+void *gestion_message (void * arg) {
+//int sock, Client *listClient, int *nbclient, Channel *listChannel, int *nbchannel
+	void** realData = (void**)arg;
+	void* p1 = realData[0];
+	void* p2 = realData[1];
+	void* p3 = realData[2];
+	void* p4 = realData[3];
+	void* p5 = realData[4];
 
 	Requete r;
+
+	int sock = *(int*)p1;
+	Client *listClient = (Client*)p2;
+	int *nbclient = (int*)p3;
+	Channel *listChannel = (Channel*)p4;
+	int *nbchannel = (int*)p5;
 	int i = 1; 
 	while (i == 1) { 
 		if(recv(sock, &r, sizeof(r),0) > 0) { // assign la requete a 
@@ -209,6 +224,8 @@ void gestion_message (int sock, Client *listClient, int *nbclient, Channel *list
 					creer_channel(listChannel, nbchannel, r.text, sock);
 					break;
 				case 7: //Id d'instruction pour fermer la connection 
+					close(sock);
+					pthread_exit(NULL);
 					return;
 				default:
 					return;
@@ -281,7 +298,7 @@ int main(int argc, char **argv) {
 
     /* attente des connexions et traitement des donnees recues */
     for(;;) {
-    
+    	
 		longueur_adresse_courante = sizeof(adresse_client_courant);
 		
 		/* adresse_client_courant sera renseigné par accept via les infos du connect */
@@ -296,9 +313,19 @@ int main(int argc, char **argv) {
 		
 		/* traitement du message */
 		printf("reception d'un message.\n");
+		
+		pthread_t thread;
+		void *ptr[5];
+		ptr[0] = &nouv_socket_descriptor;
+		ptr[1] = listClient;
+		ptr[2] = &nb_clients;
+		ptr[3] = listChannel;
+		ptr[4] = &nb_channels; 
 
-		gestion_message(nouv_socket_descriptor, listClient, &nb_clients,listChannel, &nb_channels);
-						
+		if (pthread_create(&thread, NULL, gestion_message, ptr) == -1){
+			perror("pthread_create");
+		}
+		//gestion_message(nouv_socket_descriptor, listClient, &nb_clients,listChannel, &nb_channels);
 		//close(nouv_socket_descriptor);
 		
     }
