@@ -105,10 +105,10 @@ void get_list_channel(Channel *listChannel, int socket) {
 	r.instruction = 5;
 
 	/* envoi du message vers le serveur */
-  if ((send(socket, &r, sizeof(r),0)) < 0) {
+	if ((send(socket, &r, sizeof(r),0)) < 0) {
 		perror("erreur : impossible d'ecrire le message destine au serveur.");
 		exit(1);
-  }
+	}
 
 	while(recv(socket, &c, sizeof(c),0) > 0) {
 		if (is_in_list_channel(c,listChannel) == 0) {
@@ -121,6 +121,35 @@ void get_list_channel(Channel *listChannel, int socket) {
 			listChannel = new;
 		}
 	}
+}
+
+void afficher_channel(int id_user, int socket_descriptor, Channel* listChannel) {
+
+	Requete r;
+	r.instruction = 5;
+
+	/* envoi du message vers le serveur */
+ 	if ((send(socket_descriptor, &r, sizeof(r),0)) < 0) {
+		perror("erreur : impossible d'ecrire le message destine au serveur.");
+		exit(1);
+  	}
+
+  	Channel *courant;
+	courant = listChannel;
+	printf("Voici les différents channels possibles.\n");
+	printf("Tapez le numéro du channel que vous voulez rejoindre.\n");
+
+	while(courant != NULL) {
+		printf("test\n");
+		printf("%s - ", courant->id);
+		printf("%s \n", courant->nom);
+		courant = courant->suiv;
+	}
+}
+
+int getNbChannels(int socket_descriptor) {
+	Requete r;
+	r.instruction = 
 }
 
 void fin_connection(int socket) {
@@ -229,6 +258,7 @@ int main(int argc, char **argv) {
 	printf("Action ?\n");
 	printf("0 - Quitter\n");
 	printf("1 - Ajouter channel\n");
+	printf("2 - Voir les channels\n");
 
 	int value_user;
 	scanf("%d", &value_user);
@@ -243,6 +273,9 @@ int main(int argc, char **argv) {
 				printf("ajouter suite\n");
 			}
 			break;
+		case 2:
+			afficher_channel(id_user, socket_descriptor, listChannel);
+		break;
 		default: break;
 	}
 

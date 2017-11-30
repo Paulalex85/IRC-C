@@ -121,7 +121,7 @@ void creer_channel(Channel *list,int *nbchannel, char nom[], int socket)
 	if ((send(socket, &r, sizeof(r),0)) < 0) {
 		perror("erreur : impossible d'ecrire le message destine au client.");
 		exit(1);
-  }
+  	}
 	printf("ajout du channel : %s id: %d \n", new->nom, new->id);
 }
 
@@ -164,7 +164,7 @@ int ajout_client_channel(Channel *channel, Client *list, int id_client) // retou
 	return fait;
 }
 
-void supprimer_channel(Channel *list,int id_channel)
+void supprimer_channel(Channel *list, int* nbchannel, int id_channel)
 {
 	Channel *aux;
 	Channel *pre;
@@ -192,11 +192,52 @@ void supprimer_channel(Channel *list,int id_channel)
 	}
 }
 
+void send_channels(Channel *list, int socket_descriptor) {
+	printf("test\n");
+	Channel *courant = list;
+	if(courant != NULL) {
+		//envoie au client
+		Requete r;
+		r.text = courant->id;
+		if ((send(socket_descriptor, &r, sizeof(r),0)) < 0) {
+			perror("erreur : impossible d'ecrire le message destine au client.");
+			exit(1);
+	  	}
+
+	  	courant = courant->suiv;
+	}
+	
+}
+
+void ajouter_message(Message *list, int clientId) {
+
+	Message* newMessage = (Message*) malloc(sizeof(Message));
+
+	printf("Ajouter votre message\n");
+	scanf("%s", &newMessage->message);
+
+	int lastId =list->id; 
+	newMessage->id = lastId + 1;
+	newMessage->id_client = clientId;
+	list->suiv = newMessage; // Le nouveau message devient le dernier de la list
+	newMessage->suiv = NULL;
+}
+
 void supprimer_message(Message *list) //supprime le premier de la liste
 {
 	Message *aux = list;
 	list = list->suiv;
 	free(aux);
+}
+
+void send_nb_channels(nbchannel, int socket) {
+	Requete r;
+	r.instruction = 5;
+
+	if ((send(socket, &r, sizeof(r),0)) < 0) {
+		perror("erreur : impossible d'ecrire le message destine au client.");
+		exit(1);
+  	}
 }
 
 /*------------------------------------------------------*/
@@ -229,12 +270,19 @@ void *gestion_message (void * arg) {
 				case 2:
 					creer_channel(listChannel, nbchannel, r.text, sock);
 					break;
+				case 5:
+					send_channels(listChannel, nbchannel, sock);
+					 break;
 				case 7: //Id d'instruction pour fermer la connection
 					close(sock);
 					pthread_exit(NULL);
-					return;
+					i = 0;
+					break;
+				case 8:
+					send_nb_channels(nbchannel, sock);
 				default:
-					return;
+					i = 0;
+					break;
 			}
 		}
 	}
