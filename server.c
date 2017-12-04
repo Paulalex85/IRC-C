@@ -111,9 +111,11 @@ void creer_channel(Channel *list,int *nbchannel, char nom[], int socket)
 	new->id = id_new; // assigne l'id
 	new->nb_client = 0;
 	strcpy(new->nom, nom); // copie le nom
+	printf("Le précédent channel a pour nom %s\n", list->nom);
+
 	new->suiv = list; // on pointe le premier de la liste dans le suivant du nouveau
 	list = new; // on fait pointer le début de la liste sur le nouveau
-	printf("ajout du channel %s ok\n", new->nom);
+	printf("ajout du channel %s ok\n", list->nom);
 
 	//envoie au client
 	Requete r;
@@ -194,19 +196,26 @@ void supprimer_channel(Channel *list, int* nbchannel, int id_channel)
 
 void send_channels(Channel *list, int* nbchannel, int socket_descriptor) {
 	printf("test\n");
-	Channel *courant = list;
-
+	Channel *courant = (Channel*) malloc(sizeof(Channel)); //crée new
+	courant = list;
+	/*
 	if (nbchannel > 0) {
 		Requete r;
 		r.id = nbchannel;
 		if ((send(socket_descriptor, &r, sizeof(r),0)) < 0) {
 			perror("erreur : impossible d'ecrire le message destine au client.");
 			exit(1);
-  	}
+  		}
 	}
-
+	*/
 	if(courant != NULL) {
 		//envoie au client
+		printf("test dans le courant\n");
+		printf("L'id du channel est %d\n", courant->id);
+		printf("Le nom du channel est %s\n", courant->nom);
+		printf("L'id du channel est %d\n", list->id);
+		printf("Le nom du channel est %s\n", list->nom);
+
 		Requete r;
 		r.id = courant->id;
 		if ((send(socket_descriptor, &r, sizeof(r),0)) < 0) {
