@@ -50,6 +50,7 @@ typedef struct Requete { // struct a echanger avec client
 // 3 : join channel
 // 4 : leave channel
 // 5 : get channels
+// 6 : send message
 
 int ajouter_channel(int id_user, int socket) { // retourne id channel
 	Requete r;
@@ -73,7 +74,7 @@ int ajouter_channel(int id_user, int socket) { // retourne id channel
 		if ((recv(socket, &r, sizeof(r),0)) > 0) {
 			found = 1;
 			if(r.id != -1){
-				printf("Channel cree");
+				printf("Channel cree\n");
 			}
 			else {
 				printf("probleme de creation du channel");
@@ -132,9 +133,9 @@ void afficher_channel(int id_user, int socket_descriptor, Channel* listChannel) 
  	if ((send(socket_descriptor, &r, sizeof(r),0)) < 0) {
 		perror("erreur : impossible d'ecrire le message destine au serveur.");
 		exit(1);
-  	}
+	}
 
-  	Channel *courant;
+  Channel *courant;
 	courant = listChannel;
 	printf("Voici les différents channels possibles.\n");
 	printf("Tapez le numéro du channel que vous voulez rejoindre.\n");
@@ -147,9 +148,22 @@ void afficher_channel(int id_user, int socket_descriptor, Channel* listChannel) 
 	}
 }
 
-int getNbChannels(int socket_descriptor) {
+void envoi_message(int id_user,int socket_descriptor) {
+	printf("Tapez votre message.\n");
+
+	char message;
+	scanf("%d", &message);
+
 	Requete r;
-	r.instruction = 
+	r.instruction = 6;
+	// r.text = message;
+	strcpy(r.text , message);
+
+	if ((send(socket, &r, sizeof(r),0)) < 0) { // message pour finir la connection avec le server
+		perror("erreur : impossible d'ecrire le message destine au serveur.");
+		exit(1);
+  }
+
 }
 
 void fin_connection(int socket) {

@@ -192,13 +192,23 @@ void supprimer_channel(Channel *list, int* nbchannel, int id_channel)
 	}
 }
 
-void send_channels(Channel *list, int socket_descriptor) {
+void send_channels(Channel *list, int* nbchannel, int socket_descriptor) {
 	printf("test\n");
 	Channel *courant = list;
+
+	if (nbchannel > 0) {
+		Requete r;
+		r.id = nbchannel;
+		if ((send(socket_descriptor, &r, sizeof(r),0)) < 0) {
+			perror("erreur : impossible d'ecrire le message destine au client.");
+			exit(1);
+  	}
+	}
+
 	if(courant != NULL) {
 		//envoie au client
 		Requete r;
-		r.text = courant->id;
+		r.id = courant->id;
 		if ((send(socket_descriptor, &r, sizeof(r),0)) < 0) {
 			perror("erreur : impossible d'ecrire le message destine au client.");
 			exit(1);
@@ -206,20 +216,21 @@ void send_channels(Channel *list, int socket_descriptor) {
 
 	  	courant = courant->suiv;
 	}
-	
+
 }
 
-void ajouter_message(Message *list, int clientId) {
+void ajouter_message(Channel *list, int clientId, char contenu, int socket ) {
 
 	Message* newMessage = (Message*) malloc(sizeof(Message));
 
-	printf("Ajouter votre message\n");
-	scanf("%s", &newMessage->message);
-
-	int lastId =list->id; 
+	Message* listMessage = list->listMessage;
+	int lastId =listMessage->id;
 	newMessage->id = lastId + 1;
+
+	strcpy(newMessage->message, contenu);
+	//newMessage->message = contenu;
 	newMessage->id_client = clientId;
-	list->suiv = newMessage; // Le nouveau message devient le dernier de la list
+	listMessage->suiv = newMessage; // Le nouveau message devient le dernier de la list
 	newMessage->suiv = NULL;
 }
 
@@ -228,16 +239,6 @@ void supprimer_message(Message *list) //supprime le premier de la liste
 	Message *aux = list;
 	list = list->suiv;
 	free(aux);
-}
-
-void send_nb_channels(nbchannel, int socket) {
-	Requete r;
-	r.instruction = 5;
-
-	if ((send(socket, &r, sizeof(r),0)) < 0) {
-		perror("erreur : impossible d'ecrire le message destine au client.");
-		exit(1);
-  	}
 }
 
 /*------------------------------------------------------*/
@@ -273,13 +274,13 @@ void *gestion_message (void * arg) {
 				case 5:
 					send_channels(listChannel, nbchannel, sock);
 					 break;
+				case 6:
+				 	ajouter_message(listChannel, r.id, r.text, sock);
 				case 7: //Id d'instruction pour fermer la connection
 					close(sock);
 					pthread_exit(NULL);
 					i = 0;
 					break;
-				case 8:
-					send_nb_channels(nbchannel, sock);
 				default:
 					i = 0;
 					break;
