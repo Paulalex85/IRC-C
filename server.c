@@ -33,7 +33,7 @@ typedef struct Message {
 
 typedef struct Channel {
 	struct Channel *suiv;
-	Client *listClient; // liste des membres du channel
+	Client *list_client; // liste des membres du channel
 	Message *listMessage; // les msg du channel
 	char nom[30];
 	int id;
@@ -46,21 +46,27 @@ typedef struct Requete { // struct a echanger avec client
 	int id;
 } Requete;
 
+//variables globales ftw
+Client *listClient;
+Channel *listChannel;
+int nb_clients, nb_channels;
 
-void nouveau_client(Client *list,int *nbclient, char pseudo[], int socket)
+
+
+void nouveau_client(char pseudo[], int socket)
 {
 	Client *new = (Client*) malloc(sizeof(Client)); //crée new
-	*nbclient = (*nbclient) +1; //incrémente l'id
-	new->id = *nbclient; // assigne l'id
+	nb_clients = nb_clients +1; //incrémente l'id
+	new->id = nb_clients; // assigne l'id
 	strcpy(new->pseudo, pseudo); // copie le pseudo
 
-	if(list == NULL) {
+	if(listClient == NULL) {
 		new->suiv = NULL;
 	}
 	else{
-		new->suiv = list; // on pointe le premier de la liste dans le suivant du nouveau
+		new->suiv = listClient; // on pointe le premier de la liste dans le suivant du nouveau
 	}
-	list = new; // on fait pointer le début de la liste sur le nouveau
+	listClient = new; // on fait pointer le début de la liste sur le nouveau
 
 	Requete r;
 	r.instruction = 1;
@@ -73,22 +79,24 @@ void nouveau_client(Client *list,int *nbclient, char pseudo[], int socket)
 	printf("ajout de l'user : %s id: %d \n", pseudo, new->id);
 }
 
-void supprimer_client(Client *list,int id_client)
+void supprimer_client(int id_client)
 {
 	Client *aux;
 	Client *pre;
-	if(list != NULL) {
-		if(list->id == id_client) {
-			aux = list;
-			list= list->suiv;
+	if(listClient != NULL) {
+		if(listClient->id == id_client) {
+			aux = listClient;
+			listClient= listClient->suiv;
+			nb_clients--;
 			free(aux);
 		}
 		else {
-			aux = list->suiv;
-			pre = list;
+			aux = listClient->suiv;
+			pre = listClient;
 			while(aux != NULL) {
 				if(aux->id == id_client){
 					pre->suiv = aux->suiv;
+					nb_clients--;
 					free(aux);
 					break;
 				}
@@ -101,21 +109,21 @@ void supprimer_client(Client *list,int id_client)
 	}
 }
 
-void creer_channel(Channel *list,int *nbchannel, char nom[], int socket)
+void creer_channel(char nom[], int socket)
 {
 	int id_new = -1;
 	Channel *new = (Channel*) malloc(sizeof(Channel)); //crée new
-	id_new = (*nbchannel) + 1; //incrémente l'id
-	*nbchannel = id_new; //assigne a la valeur de programme principal
+	id_new = nb_channels + 1; //incrémente l'id
+	nb_channels = id_new; //assigne a la valeur de programme principal
 
 	new->id = id_new; // assigne l'id
 	new->nb_client = 0;
 	strcpy(new->nom, nom); // copie le nom
-	printf("Le précédent channel a pour nom %s\n", list->nom);
+	printf("Le précédent channel a pour nom %s\n", listChannel->nom);
 
-	new->suiv = list; // on pointe le premier de la liste dans le suivant du nouveau
-	list = new; // on fait pointer le début de la liste sur le nouveau
-	printf("ajout du channel %s ok\n", list->nom);
+	new->suiv = listChannel; // on pointe le premier de la liste dans le suivant du nouveau
+	listChannel = new;
+	printf("ajout du channel %s ok\n", listChannel->nom);
 
 	//envoie au client
 	Requete r;
@@ -127,21 +135,22 @@ void creer_channel(Channel *list,int *nbchannel, char nom[], int socket)
 	printf("ajout du channel : %s id: %d \n", new->nom, new->id);
 }
 
-int ajout_client_channel(Channel *channel, Client *list, int id_client) // retourne 1 ou 0 si fait ou non
+int ajout_client_channel(int id_client) // retourne 1 ou 0 si fait ou non
 {
+	//TODO voir INCREMENTATION
 	int fait = 0;
 	Client *move = NULL;
 	Client *aux;
 	Client *pre;
 
-	if(list != NULL) {
-		if(list->id == id_client) {
-			move = list;//transfert
-			list = list->suiv;//enleve le client de la list générale
+	if(listClient != NULL) {
+		if(listClient->id == id_client) {
+			move = listClient;//transfert
+			listClient = listClient->suiv;//enleve le client de la list générale
 		}
 		else{
-			pre = list;
-			aux = list->suiv;
+			pre = listClient;
+			aux = listClient->suiv;
 			while(aux != NULL){
 				if(aux->id == id_client){
 					move = aux;//transfert
@@ -157,32 +166,34 @@ int ajout_client_channel(Channel *channel, Client *list, int id_client) // retou
 
 		if(move != NULL) {
 			fait = 1;
-			aux = (*channel).listClient; //prend la tete de la liste du channel
+			aux = listChannel->list_client; //prend la tete de la liste du channel
 			move->suiv = aux; //affecte la liste apres le client a ajouter
-			(*channel).listClient = move;
+			listChannel->list_client = move;
 		}
 	}
 
 	return fait;
 }
 
-void supprimer_channel(Channel *list, int* nbchannel, int id_channel)
+void supprimer_channel(int id_channel)
 {
 	Channel *aux;
 	Channel *pre;
 
-	if(list != NULL) {
-		if(list->id == id_channel) {
-			aux = list;
-			list= list->suiv;
+	if(listChannel != NULL) {
+		if(listChannel->id == id_channel) {
+			aux = listChannel;
+			listChannel= listChannel->suiv;
+			nb_channels--;
 			free(aux);
 		}
 		else {
-			aux = list->suiv;
-			pre = list;
+			aux = listChannel->suiv;
+			pre = listChannel;
 			while(aux != NULL) {
 				if(aux->id == id_channel){
 					pre->suiv = aux->suiv;
+					nb_channels--;
 					free(aux);
 				}
 				else{
@@ -194,10 +205,9 @@ void supprimer_channel(Channel *list, int* nbchannel, int id_channel)
 	}
 }
 
-void send_channels(Channel *list, int* nbchannel, int socket_descriptor) {
+void send_channels(int socket_descriptor) {
 	printf("test\n");
-	Channel *courant = (Channel*) malloc(sizeof(Channel)); //crée new
-	courant = list;
+	Channel *courant = listChannel;
 	/*
 	if (nbchannel > 0) {
 		Requete r;
@@ -208,13 +218,11 @@ void send_channels(Channel *list, int* nbchannel, int socket_descriptor) {
   		}
 	}
 	*/
-	if(courant != NULL) {
+	while(courant != NULL){
 		//envoie au client
 		printf("test dans le courant\n");
 		printf("L'id du channel est %d\n", courant->id);
 		printf("Le nom du channel est %s\n", courant->nom);
-		printf("L'id du channel est %d\n", list->id);
-		printf("Le nom du channel est %s\n", list->nom);
 
 		Requete r;
 		r.id = courant->id;
@@ -228,11 +236,11 @@ void send_channels(Channel *list, int* nbchannel, int socket_descriptor) {
 
 }
 
-void ajouter_message(Channel *list, int clientId, char contenu, int socket ) {
-
+void ajouter_message(int clientId, char contenu, int socket ) {
+//TODO BOUCLER AVEC ID CHANNEL
 	Message* newMessage = (Message*) malloc(sizeof(Message));
 
-	Message* listMessage = list->listMessage;
+	Message* listMessage = listChannel->listMessage;
 	int lastId =listMessage->id;
 	newMessage->id = lastId + 1;
 
@@ -252,21 +260,13 @@ void supprimer_message(Message *list) //supprime le premier de la liste
 
 /*------------------------------------------------------*/
 void *gestion_message (void * arg) {
-//int sock, Client *listClient, int *nbclient, Channel *listChannel, int *nbchannel
+//int sock
 	void** realData = (void**)arg;
 	void* p1 = realData[0];
-	void* p2 = realData[1];
-	void* p3 = realData[2];
-	void* p4 = realData[3];
-	void* p5 = realData[4];
 
 	Requete r;
 
 	int sock = *(int*)p1;
-	Client *listClient = (Client*)p2;
-	int *nbclient = (int*)p3;
-	Channel *listChannel = (Channel*)p4;
-	int *nbchannel = (int*)p5;
 
 	int i = 1;
 	while (i == 1) {
@@ -275,16 +275,16 @@ void *gestion_message (void * arg) {
 
 			switch(r.instruction) {
 				case 1:
-					nouveau_client(listClient, nbclient, r.text, sock);
+					nouveau_client(r.text, sock);
 					break;
 				case 2:
-					creer_channel(listChannel, nbchannel, r.text, sock);
+					creer_channel(r.text, sock);
 					break;
 				case 5:
-					send_channels(listChannel, nbchannel, sock);
+					send_channels( sock);
 					 break;
 				case 6:
-				 	ajouter_message(listChannel, r.id, r.text, sock);
+				 	ajouter_message(r.id, r.text, sock);
 				case 7: //Id d'instruction pour fermer la connection
 					close(sock);
 					pthread_exit(NULL);
@@ -315,12 +315,11 @@ int main(int argc, char **argv) {
 
 	gethostname(machine,TAILLE_MAX_NOM);		/* recuperation du nom de la machine */
 
-	Client *listClient = (Client*) malloc(sizeof(Client));
-	Channel *listChannel = (Channel*) malloc(sizeof(Channel));
-
-	int nb_messages = 0;
-	int nb_channels = 0;
-	int nb_clients = 0;
+	//init variables globales
+	listClient = (Client*) malloc(sizeof(Client));
+	listChannel = (Channel*) malloc(sizeof(Channel));
+	nb_channels = 0;
+	nb_clients = 0;
 
   /* recuperation de la structure d'adresse en utilisant le nom */
   if ((ptr_hote = gethostbyname(machine)) == NULL) {
@@ -384,12 +383,8 @@ int main(int argc, char **argv) {
 		printf("reception d'un message.\n");
 
 		pthread_t thread;
-		void *ptr[5];
+		void *ptr[1];
 		ptr[0] = &nouv_socket_descriptor;
-		ptr[1] = listClient;
-		ptr[2] = &nb_clients;
-		ptr[3] = listChannel;
-		ptr[4] = &nb_channels;
 
 		if (pthread_create(&thread, NULL, gestion_message, ptr) == -1){
 			perror("pthread_create");
