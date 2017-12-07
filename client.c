@@ -44,6 +44,8 @@ typedef struct Requete { // struct a echanger avec client
 	int id;
 } Requete;
 
+Channel *listChannel;
+
 //id des requetes
 // 1 : pseudo user -> création server
 // 2 : creation channel
@@ -85,7 +87,7 @@ int ajouter_channel(int id_user, int socket) { // retourne id channel
 	return r.id;
 }
 
-int is_in_list_channel(Channel c, Channel* listChannel) {
+int is_in_list_channel(Channel c) {
 	Channel *aux;
 	aux = listChannel;
 
@@ -100,7 +102,7 @@ int is_in_list_channel(Channel c, Channel* listChannel) {
 	return 0;
 }
 
-void get_list_channel(Channel *listChannel, int socket) {
+void get_list_channel(int socket) {
 	Channel c;
 	Requete r;
 	r.instruction = 5;
@@ -113,7 +115,7 @@ void get_list_channel(Channel *listChannel, int socket) {
 
 	printf("Channels obtenus\n");
 	while(recv(socket, &c, sizeof(c),0) > 0) {
-		if (is_in_list_channel(c,listChannel) == 0) {
+		if (is_in_list_channel(c) == 0) {
 			Channel *new = (Channel*) malloc(sizeof(Channel)); // cr
 			new->id = c.id;
 			new->nb_client = c.nb_client;
@@ -128,7 +130,7 @@ void get_list_channel(Channel *listChannel, int socket) {
 	}
 }
 
-void afficher_channel(int id_user, int socket_descriptor, Channel* listChannel) {
+void afficher_channel(int id_user, int socket_descriptor) {
 
 	Requete r;
 	r.instruction = 5;
@@ -229,7 +231,7 @@ int main(int argc, char **argv) {
 	const char * pseudo; // pseudo de l'utilisateur
 
 	Message *listMessage = NULL; // messages du channel rejoind
-	Channel *listChannel = NULL; // liste des channels
+	//Channel *listChannel = NULL; // liste des channels
 	int id_user; //id de l'utilisateur
 
   if (argc != 2) {
@@ -298,7 +300,7 @@ int main(int argc, char **argv) {
 			}
 			break;
 		case 2:
-			afficher_channel(id_user, socket_descriptor, listChannel);
+			afficher_channel(id_user, socket_descriptor);
 			//get_list_channel(listChannel, socket_descriptor);	
 		break;
 		default: break;
