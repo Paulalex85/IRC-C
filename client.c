@@ -118,6 +118,7 @@ void get_list_channel(int socket) {
 	printf("**************************************\n");
 
 	while(recv(socket, &c, sizeof(c),0) > 0) {
+		printf("JAMBON");
 		if (is_in_list_channel(c) == 0) {
 			Channel *new = (Channel*) malloc(sizeof(Channel)); // cr
 			new->id = c.id;

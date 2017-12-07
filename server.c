@@ -215,10 +215,8 @@ void send_channels(int socket_descriptor) {
 		//envoie au client
 		printf("L'id du channel est %d\n", courant->id);
 		printf("Le nom du channel est %s\n", courant->nom);
-
-		Requete r;
-		r.id = courant->id;
-		if ((send(socket_descriptor, &r, sizeof(r),0)) < 0) {
+	
+		if ((send(socket_descriptor, courant, sizeof(*courant),0)) < 0) {
 			perror("erreur : impossible d'ecrire le message destine au client.");
 			exit(1);
 	  	}
