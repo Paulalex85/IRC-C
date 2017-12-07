@@ -206,21 +206,13 @@ void supprimer_channel(int id_channel)
 }
 
 void send_channels(int socket_descriptor) {
-	printf("test\n");
 	Channel *courant = listChannel;
-	/*
-	if (nbchannel > 0) {
-		Requete r;
-		r.id = nbchannel;
-		if ((send(socket_descriptor, &r, sizeof(r),0)) < 0) {
-			perror("erreur : impossible d'ecrire le message destine au client.");
-			exit(1);
-  		}
-	}
-	*/
+	
+	printf("**************************************\n");
+	printf("********* Channels existants *********\n");
+	printf("**************************************\n");	
 	while(courant != NULL){
 		//envoie au client
-		printf("test dans le courant\n");
 		printf("L'id du channel est %d\n", courant->id);
 		printf("Le nom du channel est %s\n", courant->nom);
 

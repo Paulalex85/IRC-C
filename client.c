@@ -113,7 +113,10 @@ void get_list_channel(int socket) {
 		exit(1);
 	}
 
-	printf("Channels obtenus\n");
+	printf("**************************************\n");
+	printf("********** Channels obtenus **********\n");
+	printf("**************************************\n");
+
 	while(recv(socket, &c, sizeof(c),0) > 0) {
 		if (is_in_list_channel(c) == 0) {
 			Channel *new = (Channel*) malloc(sizeof(Channel)); // cr
@@ -121,8 +124,8 @@ void get_list_channel(int socket) {
 			new->nb_client = c.nb_client;
 			strcpy(new->nom, c.nom);
 
-			printf("%s\n", new->nom);
-			printf("%d\n", new->id);
+			printf("NOM : %s\n", new->nom);
+			printf(" ID : %d\n", new->id);
 
 			new->suiv = listChannel;
 			listChannel = new;
@@ -234,6 +237,8 @@ int main(int argc, char **argv) {
 	//Channel *listChannel = NULL; // liste des channels
 	int id_user; //id de l'utilisateur
 
+	listChannel = (Channel*) malloc(sizeof(Channel));
+
   if (argc != 2) {
 		perror("usage : client <adresse-serveur>");
 		exit(1);
@@ -300,8 +305,8 @@ int main(int argc, char **argv) {
 			}
 			break;
 		case 2:
-			afficher_channel(id_user, socket_descriptor);
-			//get_list_channel(listChannel, socket_descriptor);	
+			//afficher_channel(id_user, socket_descriptor);
+			get_list_channel(socket_descriptor);	
 		break;
 		default: break;
 	}
