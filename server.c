@@ -228,10 +228,11 @@ void send_channels(int socket_descriptor) {
 			exit(1);
 	  	}
 
-			courant = courant->suiv;
-			if(courant->suiv == NULL) {
-				exist = -1;
-			}
+		if(courant->id == 1) {
+			printf("bernard\n" );
+			exist = -1;
+		}
+		courant = courant->suiv;
 	}
 }
 
