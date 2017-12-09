@@ -4,7 +4,12 @@ gcc IRC-C/server.c -lpthread -o server
 ------------------------------------------------*/
 #include <stdlib.h>
 #include <stdio.h>
-#include <linux/types.h> 	/* pour les sockets */
+
+//POUR MAC
+#include <sys/types.h>
+// POUR LINUX - décommenter selon l'OS
+//#include <linux/types.h> 	/* pour les sockets */
+
 #include <sys/socket.h>
 #include <netdb.h> 		/* pour hostent, servent */
 #include <string.h> 		/* pour bcopy, ... */
@@ -205,29 +210,55 @@ void supprimer_channel(int id_channel)
 	}
 }
 
+// SEGMENTATION FAULT SUR MAC MAIS PAS LINUX CE QUI FAIT PLANTER LE PROG QUE SUR MAC
 void send_channels(int socket_descriptor) {
 	Channel *courant = listChannel;
-	
+
+	int exist = 1;
 	printf("**************************************\n");
 	printf("********* Channels existants *********\n");
-	printf("**************************************\n");	
-	while(courant != NULL){
+	printf("**************************************\n");
+	while(exist == 1){
 		//envoie au client
 		printf("L'id du channel est %d\n", courant->id);
 		printf("Le nom du channel est %s\n", courant->nom);
-	
+
 		if ((send(socket_descriptor, courant, sizeof(*courant),0)) < 0) {
 			perror("erreur : impossible d'ecrire le message destine au client.");
 			exit(1);
 	  	}
 
-	  	courant = courant->suiv;
+			courant = courant->suiv;
+			if(courant->suiv == NULL) {
+				exist = -1;
+			}
 	}
-
 }
 
-void ajouter_message(int clientId, char contenu, int socket ) {
-//TODO BOUCLER AVEC ID CHANNEL
+rejoindre_channel(Client *client, int id_channel) {
+	Channel *courant = listChannel;
+	int trouve = -1;
+
+	while (trouve == -1 && courant->suiv == NULL) {
+		if(courant->id == id_channel) {
+			trouve = 1;
+			printf("Un utilisateur a rejoint le channel %s\n", courant->nom);
+
+			Client *lastClient = courant->list_client;
+			if (lastClient == NULL) {
+				lastClient = client;
+			} else {
+				lastClient->suiv = client;
+				lastClient = client;
+			}
+		} else {
+			courant = courant->suiv;
+		}
+	}
+}
+
+void ajouter_message(int channelId, char contenu, int socket) {
+//TODO BOUCLER AVEC ID CHANNEL channelId
 	Message* newMessage = (Message*) malloc(sizeof(Message));
 
 	Message* listMessage = listChannel->listMessage;
@@ -235,8 +266,8 @@ void ajouter_message(int clientId, char contenu, int socket ) {
 	newMessage->id = lastId + 1;
 
 	strcpy(newMessage->message, contenu);
-	//newMessage->message = contenu;
-	newMessage->id_client = clientId;
+	// TODO Reussir à envoyer et l'id du channel et l'id du client dans la requete
+	//newMessage->id_client = clientId;
 	listMessage->suiv = newMessage; // Le nouveau message devient le dernier de la list
 	newMessage->suiv = NULL;
 }
@@ -312,7 +343,7 @@ int main(int argc, char **argv) {
 	nb_clients = 0;
 
   /* recuperation de la structure d'adresse en utilisant le nom */
-  if ((ptr_hote = gethostbyname(machine)) == NULL) {
+	if ((ptr_hote = gethostbyname("127.0.0.1")) == NULL) {
 		perror("erreur : impossible de trouver le serveur a partir de son nom.");
 		exit(1);
   }

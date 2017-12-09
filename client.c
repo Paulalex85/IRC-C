@@ -4,7 +4,12 @@ client <adresse-serveur>
 ------------------------------------------------------------*/
 #include <stdlib.h>
 #include <stdio.h>
-#include <linux/types.h>
+
+//POUR MAC
+#include <sys/types.h>
+// POUR LINUX - décommenter selon l'OS
+//#include <linux/types.h> 	/* pour les sockets */
+
 #include <sys/socket.h>
 #include <netdb.h>
 #include <string.h>
@@ -134,52 +139,35 @@ void get_list_channel(int socket) {
 	}
 }
 
-void afficher_channel(int id_user, int socket_descriptor) {
+void envoi_message(int id_user, int id_channel, int socket_descriptor) {
+	printf("**************************************\n");
+	printf("**** Bienvenue dans le channel %d ****\n", id_channel);
+	printf("**************************************\n");
+	printf("* Tapez 'q:' pour quitter le channel\n");
 
-	Requete r;
-	r.instruction = 5;
-
-	/* envoi du message vers le serveur */
- 	if ((send(socket_descriptor, &r, sizeof(r),0)) < 0) {
-		perror("erreur : impossible d'ecrire le message destine au serveur.");
-		exit(1);
-	}
-
-  	Channel *courant;
-	courant = listChannel;
-	printf("Voici les différents channels possibles.\n");
-	printf("Tapez le numéro du channel que vous voulez rejoindre.\n");
-
-
-
-	if(recv(socket, &r, sizeof(r),0) > 0) {
-		printf("bidule\n");
-	}
-
-	while(courant != NULL) {
-		printf("test client \n");
-		printf("%s - ", courant->id);
-		printf("%s \n", courant->nom);
-		courant = courant->suiv;
-	}
-}
-
-void envoi_message(int id_user,int socket_descriptor) {
-	printf("Tapez votre message.\n");
-
-	char message;
-	scanf("%d", &message);
+	int veutEcrire = 1;
+	char message[256];
 
 	Requete r;
 	r.instruction = 6;
-	// r.text = message;
-	strcpy(r.text , message);
+	r.id = id_channel;
 
-	if ((send(socket, &r, sizeof(r),0)) < 0) { // message pour finir la connection avec le server
-		perror("erreur : impossible d'ecrire le message destine au serveur.");
-		exit(1);
-  }
+	while(veutEcrire == 1) {
+		scanf("%s\n", message);
 
+		if (strcmp(message, "q:") == 0) {
+        printf("Au revoir !");
+				veutEcrire = -1;
+				//fin_connection(socket_descriptor);
+    }  else {
+				strcpy(r.text, message);
+				// On envoie le message au serveur pour qu'il puisse l'envoyer à tous les membres
+				if ((send(socket_descriptor, &r, sizeof(r),0)) < 0) { // message pour finir la connection avec le server
+					perror("erreur : impossible d'ecrire le message destine au serveur.");
+					exit(1);
+				}
+    }
+	}
 }
 
 void fin_connection(int socket) {
@@ -307,7 +295,7 @@ int main(int argc, char **argv) {
 			break;
 		case 2:
 			//afficher_channel(id_user, socket_descriptor);
-			get_list_channel(socket_descriptor);	
+			get_list_channel(socket_descriptor);
 		break;
 		default: break;
 	}
