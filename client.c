@@ -58,6 +58,7 @@ Channel *listChannel;
 // 4 : leave channel
 // 5 : get channels
 // 6 : send message
+// 8 : joindre un channel
 
 int ajouter_channel(int id_user, int socket) { // retourne id channel
 	Requete r;
@@ -107,7 +108,7 @@ int is_in_list_channel(Channel c) {
 	return 0;
 }
 
-void get_list_channel(int socket) {
+void get_list_channel(int socket, int id_user) {
 	Channel c;
 	Requete r;
 	r.instruction = 5;
@@ -122,20 +123,58 @@ void get_list_channel(int socket) {
 	printf("********** Channels obtenus **********\n");
 	printf("**************************************\n");
 
-	while(recv(socket, &c, sizeof(c),0) > 0) {
-		printf("JAMBON");
+	int encore = 1;
+	while(encore == 1 && recv(socket, &c, sizeof(c),0) > 0) {
 		if (is_in_list_channel(c) == 0) {
 			Channel *new = (Channel*) malloc(sizeof(Channel)); // cr
 			new->id = c.id;
 			new->nb_client = c.nb_client;
 			strcpy(new->nom, c.nom);
 
-			printf("NOM : %s\n", new->nom);
+			printf("NOM : %s ", new->nom);
 			printf(" ID : %d\n", new->id);
+
+			if(new->id == 1) {
+				encore = -1;
+			}
 
 			new->suiv = listChannel;
 			listChannel = new;
 		}
+	}
+
+	printf("Tapez l'id du channel que vous voulez rejoindre\n");
+	int channelVoulu;
+	scanf("%d", &channelVoulu);
+	printf("Channel %d rejoint !\n", channelVoulu);
+
+	// On  cherche le channel choisis dans le chainage
+	int trouve = -1;
+	Channel *courant = listChannel;
+	while(courant->suiv != NULL && trouve == -1) {
+		printf("test while : %s \n", courant->nom);
+		if (channelVoulu == courant->id) {
+			trouve = 1;
+		} else {
+			courant = courant->suiv;
+		}
+	}
+
+	printf("test dehors while\n");
+	printf("%d - %s \n", courant->id, courant->nom);
+	// L'id du channel
+	r.id = courant->id;
+	// L'instruction pour que le serveur sache quoi faire
+	r.instruction = 8;
+	// L'id du client, on le convertis d'int to string
+  	sprintf(r.text, "%d", id_user);
+
+  	//r.text = id_user +'0';
+	printf("%s - %d - %d \n", r.text, r.instruction, r.id);
+
+	if ((send(socket, &r, sizeof(r),0)) < 0) { // message pour finir la connection avec le server
+		perror("erreur : impossible d'ecrire le message destine au serveur.");
+		exit(1);
 	}
 }
 
@@ -295,7 +334,7 @@ int main(int argc, char **argv) {
 			break;
 		case 2:
 			//afficher_channel(id_user, socket_descriptor);
-			get_list_channel(socket_descriptor);
+			get_list_channel(socket_descriptor, id_user);
 		break;
 		default: break;
 	}

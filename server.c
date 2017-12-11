@@ -236,10 +236,13 @@ void send_channels(int socket_descriptor) {
 	}
 }
 
-rejoindre_channel(Client *client, int id_channel) {
+rejoindre_channel(int id_client, int id_channel) {
+	printf("Rejoindre channel est appelé \n");
+	/*
 	Channel *courant = listChannel;
 	int trouve = -1;
 
+	Client *client = (Client*) malloc(sizeof(Client));
 	while (trouve == -1 && courant->suiv == NULL) {
 		if(courant->id == id_channel) {
 			trouve = 1;
@@ -256,6 +259,7 @@ rejoindre_channel(Client *client, int id_channel) {
 			courant = courant->suiv;
 		}
 	}
+	*/
 }
 
 void ajouter_message(int channelId, char contenu, int socket) {
@@ -312,6 +316,8 @@ void *gestion_message (void * arg) {
 					pthread_exit(NULL);
 					i = 0;
 					break;
+				case 8:
+					rejoindre_channel(r.text, r.id);
 				default:
 					i = 0;
 					break;
