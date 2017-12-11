@@ -236,30 +236,50 @@ void send_channels(int socket_descriptor) {
 	}
 }
 
-rejoindre_channel(int id_client, int id_channel) {
-	printf("Rejoindre channel est appelé \n");
-	/*
-	Channel *courant = listChannel;
-	int trouve = -1;
+void rejoindre_channel(int sock, char id_client_string[256], int id_channel) {
+	printf("Le client numero %s \n", id_client_string);
+	int id_client = atoi(id_client_string);
 
-	Client *client = (Client*) malloc(sizeof(Client));
-	while (trouve == -1 && courant->suiv == NULL) {
+	Channel *channel;
+	if(recv(sock, channel, sizeof(*channel),0) > 0) {
+		printf("Reception du channel %s\n", channel->nom);
+	}
+
+	Client *clientCourant = listClient;
+	int trouve = -1;
+	while (trouve == -1 && clientCourant->suiv != NULL) {
+		printf("dans le while\n");
+		printf("%d - %d \n", clientCourant->id, id_client);
+		if(clientCourant->id == id_client) {
+			trouve = 1;
+			printf("L'utilisateur %s a rejoint le channel\n", clientCourant->pseudo);
+		} else {
+			printf("dans l'else\n");
+			clientCourant = clientCourant->suiv;
+		}
+	}
+
+	Channel *courant = listChannel;
+	trouve = -1;
+
+	while (trouve == -1 && courant->suiv != NULL) {
 		if(courant->id == id_channel) {
 			trouve = 1;
 			printf("Un utilisateur a rejoint le channel %s\n", courant->nom);
 
 			Client *lastClient = courant->list_client;
 			if (lastClient == NULL) {
-				lastClient = client;
+				printf("aucun membre \n");
+				lastClient = clientCourant;
 			} else {
-				lastClient->suiv = client;
-				lastClient = client;
+				lastClient->suiv = clientCourant;
+				lastClient = clientCourant;
+				printf("%s\n", lastClient->pseudo);
 			}
 		} else {
 			courant = courant->suiv;
 		}
 	}
-	*/
 }
 
 void ajouter_message(int channelId, char contenu, int socket) {
@@ -275,6 +295,8 @@ void ajouter_message(int channelId, char contenu, int socket) {
 	//newMessage->id_client = clientId;
 	listMessage->suiv = newMessage; // Le nouveau message devient le dernier de la list
 	newMessage->suiv = NULL;
+
+	printf("test\n");
 }
 
 void supprimer_message(Message *list) //supprime le premier de la liste
@@ -307,7 +329,7 @@ void *gestion_message (void * arg) {
 					creer_channel(r.text, sock);
 					break;
 				case 5:
-					send_channels( sock);
+					send_channels(sock);
 					 break;
 				case 6:
 				 	ajouter_message(r.id, r.text, sock);
@@ -317,7 +339,7 @@ void *gestion_message (void * arg) {
 					i = 0;
 					break;
 				case 8:
-					rejoindre_channel(r.text, r.id);
+					rejoindre_channel(sock, r.text, r.id);
 				default:
 					i = 0;
 					break;

@@ -176,6 +176,13 @@ void get_list_channel(int socket, int id_user) {
 		perror("erreur : impossible d'ecrire le message destine au serveur.");
 		exit(1);
 	}
+
+	if ((send(socket, courant, sizeof(*courant),0)) < 0) {
+		perror("erreur : impossible d'ecrire le message destine au serveur.");
+		exit(1);
+	}
+
+	envoi_message(id_user, courant->id, socket);
 }
 
 void envoi_message(int id_user, int id_channel, int socket_descriptor) {
