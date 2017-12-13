@@ -150,8 +150,9 @@ void get_list_channel(int socket, int id_user) {
 
 	// On  cherche le channel choisis dans le chainage
 	int trouve = -1;
-	Channel *courant = listChannel;
-	while(courant->suiv != NULL && trouve == -1) {
+	Channel *courant = (Channel*) malloc(sizeof(Channel)); //crée new
+	courant = listChannel;
+	while(trouve == -1 && courant->suiv != NULL) {
 		printf("test while : %s \n", courant->nom);
 		if (channelVoulu == courant->id) {
 			trouve = 1;
@@ -161,7 +162,7 @@ void get_list_channel(int socket, int id_user) {
 	}
 
 	printf("test dehors while\n");
-	printf("%d - %s \n", courant->id, courant->nom);
+	printf("id : %d - nom: %s nbclients: %d \n", courant->id, courant->nom, courant->nb_client);
 	// L'id du channel
 	r.id = courant->id;
 	// L'instruction pour que le serveur sache quoi faire
@@ -191,9 +192,12 @@ void envoi_message(int id_user, int id_channel, int socket_descriptor, Channel *
 	printf("**************************************\n");
 	printf("* Tapez 'q:' pour quitter le channel\n");
 
-	Client *listClient = channelChoisis->listClient;
+	Client *listClient = (Client*) malloc(sizeof(Client)); //crée new
+	listClient = channelChoisis->listClient;
 	printf("Membres du channel\n");
+	printf("Nombre de membres : %d\n", channelChoisis->nb_client);
 	while (listClient != NULL) {
+		printf("dans le while \n");
 		printf("%s\n", listClient->pseudo);
 		listClient = listClient->suiv;
 	}
@@ -208,6 +212,7 @@ void envoi_message(int id_user, int id_channel, int socket_descriptor, Channel *
 	Message *messageRecu;
 	while(veutEcrire == 1) {
 
+		r.instruction = 6;
 		scanf("%s\n", &message);
 		printf("le messsage entré est %s\n", message);
 
@@ -220,11 +225,12 @@ void envoi_message(int id_user, int id_channel, int socket_descriptor, Channel *
 				// On envoie le message au serveur pour qu'il puisse l'envoyer à tous les membres
 				if ((send(socket_descriptor, &r, sizeof(r), 0)) > 0) {
 					printf("Message envoyé\n");
+					strcpy(r.text, "chaine vidé");
+					printf("%s\n", r.text);
 				}
 
-				if ((recv(socket_descriptor, &r, sizeof(r), 0)) > 0) {
-					printf("test dans le recv\n");
-					printf("%s\n", r.text);
+				if ((recv(socket_descriptor, &r, sizeof(r),0)) > 0) {
+					printf("Message reçu ! %s\n", r.text);
 				}
     }
 	}
@@ -352,6 +358,7 @@ int main(int argc, char **argv) {
 			{
 				printf("ajouter suite\n");
 			}
+			get_list_channel(socket_descriptor, id_user);
 			break;
 		case 2:
 			//afficher_channel(id_user, socket_descriptor);

@@ -245,7 +245,9 @@ void rejoindre_channel(int sock, char id_client_string[256], int id_channel) {
 		printf("Reception du channel %s\n", channel->nom);
 	}
 
-	Client *clientCourant = listClient;
+	// Trouver le client via son ID
+	Client *clientCourant = (Client*) malloc(sizeof(Client)); //crée new
+	clientCourant = listClient;
 	int trouve = -1;
 	while (trouve == -1 && clientCourant->suiv != NULL) {
 		printf("dans le while\n");
@@ -261,16 +263,19 @@ void rejoindre_channel(int sock, char id_client_string[256], int id_channel) {
 
 	Channel *courant = listChannel;
 	trouve = -1;
-
+	// Ajouter le client trouvé précedemment au channel VOULU
 	while (trouve == -1 && courant->suiv != NULL) {
 		if(courant->id == id_channel) {
 			trouve = 1;
-			printf("Un utilisateur a rejoint le channel %s\n", courant->nom);
 
-			Client *lastClient = courant->list_client;
+			Client *lastClient = (Client*) malloc(sizeof(Client)); //crée new
+			lastClient = courant->list_client;
 			if (lastClient == NULL) {
-				printf("aucun membre \n");
+				printf("Aucun membre \n");
 				lastClient = clientCourant;
+				courant->nb_client = courant->nb_client + 1;
+				printf("%s a rejoint le channel %s\n",lastClient->pseudo, courant->nom);
+				printf("Nombre de membres : %d\n", courant->nb_client);
 			} else {
 				lastClient->suiv = clientCourant;
 				lastClient = clientCourant;
