@@ -293,6 +293,11 @@ void rejoindre_channel(int sock, char id_client_string[256], int id_channel) {
 		printf("%s\n", listClient->pseudo);
 		listClient = listClient->suiv;
 	} */
+
+	if ((send(sock, courant, sizeof(*courant),0)) < 0) {
+		perror("erreur : impossible d'ecrire le message destine au serveur.");
+		exit(1);
+	}
 }
 
 void ajouter_message(int channelId, char contenu[], int socket) {

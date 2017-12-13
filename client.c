@@ -50,6 +50,7 @@ typedef struct Requete { // struct a echanger avec client
 } Requete;
 
 Channel *listChannel;
+Channel *channelChoisis;
 
 //id des requetes
 // 1 : pseudo user -> création server
@@ -93,12 +94,12 @@ int ajouter_channel(int id_user, int socket) { // retourne id channel
 	return r.id;
 }
 
-int is_in_list_channel(Channel c) {
+int is_in_list_channel(Channel* c) {
 	Channel *aux;
 	aux = listChannel;
 
 	while (aux != NULL) {
-		if(aux->id == c.id) {
+		if(aux->id == c->id) {
 			return 1;
 		}
 
@@ -109,7 +110,7 @@ int is_in_list_channel(Channel c) {
 }
 
 void get_list_channel(int socket, int id_user) {
-	Channel c;
+	Channel *c = (Channel*) malloc(sizeof(Channel));;
 	Requete r;
 	r.instruction = 5;
 
@@ -124,12 +125,12 @@ void get_list_channel(int socket, int id_user) {
 	printf("**************************************\n");
 
 	int encore = 1;
-	while(encore == 1 && recv(socket, &c, sizeof(c),0) > 0) {
+	while(encore == 1 && recv(socket, c, sizeof(*c),0) > 0) {
 		if (is_in_list_channel(c) == 0) {
 			Channel *new = (Channel*) malloc(sizeof(Channel)); // cr
-			new->id = c.id;
-			new->nb_client = c.nb_client;
-			strcpy(new->nom, c.nom);
+			new->id = c->id;
+			new->nb_client = c->nb_client;
+			strcpy(new->nom, c->nom);
 
 			printf("NOM : %s ", new->nom);
 			printf(" ID : %d\n", new->id);
@@ -156,13 +157,12 @@ void get_list_channel(int socket, int id_user) {
 		printf("test while : %s \n", courant->nom);
 		if (channelVoulu == courant->id) {
 			trouve = 1;
+			channelChoisis = courant;
 		} else {
 			courant = courant->suiv;
 		}
 	}
 
-	printf("test dehors while\n");
-	printf("id : %d - nom: %s nbclients: %d \n", courant->id, courant->nom, courant->nb_client);
 	// L'id du channel
 	r.id = courant->id;
 	// L'instruction pour que le serveur sache quoi faire
@@ -178,15 +178,22 @@ void get_list_channel(int socket, int id_user) {
 		exit(1);
 	}
 
-	if ((send(socket, courant, sizeof(*courant),0)) < 0) {
+	if ((send(socket, channelChoisis, sizeof(*channelChoisis),0)) < 0) {
 		perror("erreur : impossible d'ecrire le message destine au serveur.");
 		exit(1);
 	}
 
-	envoi_message(id_user, courant->id, socket, courant);
+	printf("id : %d - nom: %s nbclients: %d \n", channelChoisis->id, channelChoisis->nom, channelChoisis->nb_client);
+
+	if ((recv(socket, channelChoisis, sizeof(*channelChoisis),0)) > 0) {
+		printf("Channel reçu ! \n");
+	}
+	printf("id : %d - nom: %s nbclients: %d \n", channelChoisis->id, channelChoisis->nom, channelChoisis->nb_client);
+
+	envoi_message(id_user, courant->id, socket);
 }
 
-void envoi_message(int id_user, int id_channel, int socket_descriptor, Channel *channelChoisis) {
+void envoi_message(int id_user, int id_channel, int socket_descriptor) {
 	printf("**************************************\n");
 	printf("**** Bienvenue dans le channel %d ****\n", id_channel);
 	printf("**************************************\n");
@@ -293,6 +300,7 @@ int main(int argc, char **argv) {
 	int id_user; //id de l'utilisateur
 
 	listChannel = (Channel*) malloc(sizeof(Channel));
+	channelChoisis = (Channel*) malloc(sizeof(Channel));
 
   if (argc != 2) {
 		perror("usage : client <adresse-serveur>");
