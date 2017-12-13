@@ -173,11 +173,13 @@ void get_list_channel(int socket, int id_user) {
   	//r.text = id_user +'0';
 	printf("%s - %d - %d \n", r.text, r.instruction, r.id);
 
+	// On demande à rejoindre le channel
 	if ((send(socket, &r, sizeof(r),0)) < 0) { // message pour finir la connection avec le server
 		perror("erreur : impossible d'ecrire le message destine au serveur.");
 		exit(1);
 	}
 
+	// On envoie le channel qu'on veut rejoindre
 	if ((send(socket, channelChoisis, sizeof(*channelChoisis),0)) < 0) {
 		perror("erreur : impossible d'ecrire le message destine au serveur.");
 		exit(1);
