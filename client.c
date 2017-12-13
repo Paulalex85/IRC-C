@@ -6,9 +6,9 @@ client <adresse-serveur>
 #include <stdio.h>
 
 //POUR MAC
-#include <sys/types.h>
+//#include <sys/types.h>
 // POUR LINUX - décommenter selon l'OS
-//#include <linux/types.h> 	/* pour les sockets */
+#include <linux/types.h> 	/* pour les sockets */
 
 #include <sys/socket.h>
 #include <netdb.h>
@@ -182,24 +182,34 @@ void get_list_channel(int socket, int id_user) {
 		exit(1);
 	}
 
-	envoi_message(id_user, courant->id, socket);
+	envoi_message(id_user, courant->id, socket, courant);
 }
 
-void envoi_message(int id_user, int id_channel, int socket_descriptor) {
+void envoi_message(int id_user, int id_channel, int socket_descriptor, Channel *channelChoisis) {
 	printf("**************************************\n");
 	printf("**** Bienvenue dans le channel %d ****\n", id_channel);
 	printf("**************************************\n");
 	printf("* Tapez 'q:' pour quitter le channel\n");
 
+	Client *listClient = channelChoisis->listClient;
+	printf("Membres du channel\n");
+	while (listClient != NULL) {
+		printf("%s\n", listClient->pseudo);
+		listClient = listClient->suiv;
+	}
+
 	int veutEcrire = 1;
-	char message[256];
+	char message[256] = "";
 
 	Requete r;
 	r.instruction = 6;
 	r.id = id_channel;
 
+	Message *messageRecu;
 	while(veutEcrire == 1) {
-		scanf("%s\n", message);
+
+		scanf("%s\n", &message);
+		printf("le messsage entré est %s\n", message);
 
 		if (strcmp(message, "q:") == 0) {
         printf("Au revoir !");
@@ -208,9 +218,13 @@ void envoi_message(int id_user, int id_channel, int socket_descriptor) {
     }  else {
 				strcpy(r.text, message);
 				// On envoie le message au serveur pour qu'il puisse l'envoyer à tous les membres
-				if ((send(socket_descriptor, &r, sizeof(r),0)) < 0) { // message pour finir la connection avec le server
-					perror("erreur : impossible d'ecrire le message destine au serveur.");
-					exit(1);
+				if ((send(socket_descriptor, &r, sizeof(r), 0)) > 0) {
+					printf("Message envoyé\n");
+				}
+
+				if ((recv(socket_descriptor, &r, sizeof(r), 0)) > 0) {
+					printf("test dans le recv\n");
+					printf("%s\n", r.text);
 				}
     }
 	}

@@ -6,9 +6,9 @@ gcc IRC-C/server.c -lpthread -o server
 #include <stdio.h>
 
 //POUR MAC
-#include <sys/types.h>
+//#include <sys/types.h>
 // POUR LINUX - décommenter selon l'OS
-//#include <linux/types.h> 	/* pour les sockets */
+#include <linux/types.h> 	/* pour les sockets */
 
 #include <sys/socket.h>
 #include <netdb.h> 		/* pour hostent, servent */
@@ -280,10 +280,29 @@ void rejoindre_channel(int sock, char id_client_string[256], int id_channel) {
 			courant = courant->suiv;
 		}
 	}
+
+	/*
+	Client *listClient = courant->list_client;
+	printf("Membres du channel\n");
+	while (listClient != NULL) {
+		printf("%s\n", listClient->pseudo);
+		listClient = listClient->suiv;
+	} */
 }
 
-void ajouter_message(int channelId, char contenu, int socket) {
-//TODO BOUCLER AVEC ID CHANNEL channelId
+void ajouter_message(int channelId, char contenu[], int socket) {
+
+	printf("test de la méthode ajoute message\n");
+
+	Requete r;
+	strcpy(r.text, contenu);
+	printf("%s\n", r.text);
+	if ((send(socket, &r, sizeof(r),0)) < 0) {
+		perror("erreur : impossible d'ecrire le message destine au serveur.");
+		exit(1);
+  }
+	/*
+	//TODO BOUCLER AVEC ID CHANNEL channelId
 	Message* newMessage = (Message*) malloc(sizeof(Message));
 
 	Message* listMessage = listChannel->listMessage;
@@ -295,6 +314,11 @@ void ajouter_message(int channelId, char contenu, int socket) {
 	//newMessage->id_client = clientId;
 	listMessage->suiv = newMessage; // Le nouveau message devient le dernier de la list
 	newMessage->suiv = NULL;
+
+	if ((send(socket, newMessage, sizeof(*newMessage),0)) < 0) {
+		perror("erreur : impossible d'ecrire le message destine au serveur.");
+		exit(1);
+  } */
 
 	printf("test\n");
 }
@@ -333,6 +357,7 @@ void *gestion_message (void * arg) {
 					 break;
 				case 6:
 				 	ajouter_message(r.id, r.text, sock);
+					break;
 				case 7: //Id d'instruction pour fermer la connection
 					close(sock);
 					pthread_exit(NULL);
@@ -340,6 +365,7 @@ void *gestion_message (void * arg) {
 					break;
 				case 8:
 					rejoindre_channel(sock, r.text, r.id);
+					break;
 				default:
 					i = 0;
 					break;
