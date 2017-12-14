@@ -74,7 +74,6 @@ Channel* get_channel_by_id(int id){
 	Channel* current = listChannel;
 	while(current != NULL){
 		if(current->id == id){
-			printf("Channel trouve");
 			return current;
 		}else{
 			current= current->suiv;
@@ -249,10 +248,7 @@ void send_channels(int socket_descriptor) {
 	Channel *courant = listChannel;
 	Channel infos_chan;
 	infos_chan.nb_client = nb_channels;
-<<<<<<< HEAD
 	printf("il y a %d channels", nb_channels);
-=======
->>>>>>> 4d03d77f1349d5d85d3b575023007e30de2e3dcc
 	
 	//permet de savoir combien de channel sont existant
 	if ((send(socket_descriptor, &infos_chan, sizeof(infos_chan),0)) < 0) {
@@ -287,7 +283,6 @@ void rejoindre_channel(int sock, int id_channel) {
 			courant_chan = courant_chan->suiv;
 		}
 	}
-<<<<<<< HEAD
 	if ((send(sock, courant_chan, sizeof(*courant_chan),0)) < 0) {
 		perror("erreur : impossible d'ecrire le message destine au client.");
 		exit(1);
@@ -322,48 +317,6 @@ void envoyer_list_message(int id_channel , int socket) {
 		perror("erreur : impossible d'ecrire le message destine au client.");
 		exit(1);
 	}
-=======
-	
-	if(courant_chan == NULL){
-		Channel channel_vide;
-		channel_vide.id = -1;
-		if ((send(sock, &channel_vide, sizeof(channel_vide),0)) < 0) {
-			perror("erreur : impossible d'ecrire le message destine au client.");
-			exit(1);
-		}
-	}
-	else{
-		//envoie les infos du channel au client
-		if ((send(sock, courant_chan, sizeof(*courant_chan),0)) < 0) {
-			perror("erreur : impossible d'ecrire le message destine au client.");
-			exit(1);
-		}
-	}
-}
-
-void envoyer_list_message(int id_channel , int socket) {
-	int nb_message = 0;
-	Channel* current = listChannel;
-	Message* mess;
-	Message message_infos;
-	Message* aux;
-//on cherche le channel
-	/*current = get_channel_by_id(id_channel);
-	mess = current->listMessage;*/
-	//une fois cela fait on parcour la liste pour avoir le nombre de message dans la liste
-	/*while(mess != NULL){
-		nb_message++;
-		mess = mess->suiv;
-	}*/
-	
-	printf("test1");
-	//envoie le nombre de message a recevoir au client
-	/*message_infos.id = nb_message;
-	if ((send(socket, &message_infos, sizeof(message_infos),0)) < 0) {
-		perror("erreur : impossible d'ecrire le message destine au client.");
-		exit(1);
-	}
->>>>>>> 4d03d77f1349d5d85d3b575023007e30de2e3dcc
 	printf("test2");
 	mess = current->listMessage;
 	int compteur_aux;
@@ -386,11 +339,7 @@ void envoyer_list_message(int id_channel , int socket) {
 }
 
 void get_last_message(int id_channel , int sock){
-<<<<<<< HEAD
 	Channel *current = get_channel_by_id(id_channel);
-=======
-	Channel*current = get_channel_by_id(id_channel);
->>>>>>> 4d03d77f1349d5d85d3b575023007e30de2e3dcc
 	Message mess;
 	if(current->listMessage == NULL )
 	{

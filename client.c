@@ -51,11 +51,7 @@ typedef struct Requete { // struct a echanger avec client
 
 Channel *listChannel;
 Channel channel_info;
-<<<<<<< HEAD
 char pseudo[30];
-=======
-
->>>>>>> 4d03d77f1349d5d85d3b575023007e30de2e3dcc
 
 int ajouter_channel(int socket) { // retourne id channel
 	Requete r;
@@ -258,10 +254,7 @@ int mode_channel(int socket){
 	r.id = channel_info.id;
 	int nb_mess;
 	int last_id_mess;
-<<<<<<< HEAD
 	char temp_char[256];
-=======
->>>>>>> 4d03d77f1349d5d85d3b575023007e30de2e3dcc
 	
 	Message newMess;
 	
@@ -273,11 +266,7 @@ int mode_channel(int socket){
 	
 	while(fin == 0){
 		//demande le dernier message
-<<<<<<< HEAD
 		r.instruction = 9;
-=======
-		r.id = 9;
->>>>>>> 4d03d77f1349d5d85d3b575023007e30de2e3dcc
 		if ((send(socket, &r, sizeof(r),0)) < 0) {
 			perror("erreur : impossible d'ecrire le message destine au serveur.");
 			exit(1);
@@ -291,22 +280,15 @@ int mode_channel(int socket){
 		}
 		
 		
-<<<<<<< HEAD
 		scanf("%s", &temp_char);
-=======
-		scanf("%s", &r.text);
->>>>>>> 4d03d77f1349d5d85d3b575023007e30de2e3dcc
 		if (strcmp(r.text, "q:") == 0) { //quitte le channel 
 			return 1; //retourne a la selection des channels 
 		}
 		else { // envoie message
 			r.instruction = 6;
-<<<<<<< HEAD
 			strcpy(r.text, pseudo);
 			strcat(r.text, " :" );
 			strcat(r.text, temp_char);
-=======
->>>>>>> 4d03d77f1349d5d85d3b575023007e30de2e3dcc
 			//le texte et l'id channel est deja renseigné
 			if ((send(socket, &r, sizeof(r),0)) < 0) {
 				perror("erreur : impossible d'ecrire le message destine au serveur.");
@@ -482,11 +464,7 @@ int main(int argc, char **argv) {
   }
 
 	printf("connexion etablie avec le serveur. \n");
-<<<<<<< HEAD
 	creation_user(socket_descriptor, &id_user);
-=======
-	pseudo = creation_user(socket_descriptor, &id_user);
->>>>>>> 4d03d77f1349d5d85d3b575023007e30de2e3dcc
 	printf("id user : %d \n", id_user);
 	
 	//lance la boucle
