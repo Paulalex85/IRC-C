@@ -50,32 +50,23 @@ typedef struct Requete { // struct a echanger avec client
 } Requete;
 
 Channel *listChannel;
-Channel *channelChoisis;
+Channel channel_info;
+char pseudo[30];
 
-//id des requetes
-// 1 : pseudo user -> création server
-// 2 : creation channel
-// 3 : join channel
-// 4 : leave channel
-// 5 : get channels
-// 6 : send message
-// 8 : joindre un channel
-
-int ajouter_channel(int id_user, int socket) { // retourne id channel
+int ajouter_channel(int socket) { // retourne id channel
 	Requete r;
 	int found = 0;
 	r.instruction = 2;
-	r.id = id_user;
 	printf("Nom Channel? \n");
 	scanf("%s", &r.text);
 
 	/* envoi du message vers le serveur */
-  if ((send(socket, &r, sizeof(r),0)) < 0) {
+	if ((send(socket, &r, sizeof(r),0)) < 0) {
 		perror("erreur : impossible d'ecrire le message destine au serveur.");
 		exit(1);
-  }
+	}
 
-  printf("ajout envoye au serveur. \n");
+	printf("ajout envoye au serveur. \n");
 
 	r.id = -1;
 	/* lecture de la reponse en provenance du serveur */
@@ -109,12 +100,12 @@ int is_in_list_channel(Channel* c) {
 	return 0;
 }
 
-void get_list_channel(int socket, int id_user) {
+/*void get_list_channel(int socket, int id_user) {
 	Channel *c = (Channel*) malloc(sizeof(Channel));;
 	Requete r;
 	r.instruction = 5;
 
-	/* envoi du message vers le serveur */
+	//envoi du message vers le serveur 
 	if ((send(socket, &r, sizeof(r),0)) < 0) {
 		perror("erreur : impossible d'ecrire le message destine au serveur.");
 		exit(1);
@@ -243,7 +234,7 @@ void envoi_message(int id_user, int id_channel, int socket_descriptor) {
 				}
     }
 	}
-}
+}*/
 
 void fin_connection(int socket) {
 	Requete r;
@@ -252,10 +243,142 @@ void fin_connection(int socket) {
 	if ((send(socket, &r, sizeof(r),0)) < 0) { // message pour finir la connection avec le server
 		perror("erreur : impossible d'ecrire le message destine au serveur.");
 		exit(1);
-  }
+    }
 }
 
-const char* creation_user(int socket, int *id_user) {
+int mode_channel(int socket){
+	Requete r;
+	int fin = 0;
+	//Demande tout les messages deja existant
+	r.instruction = 9;
+	r.id = channel_info.id;
+	int nb_mess;
+	int last_id_mess;
+	char temp_char[256];
+	
+	Message newMess;
+	
+	printf("**************************************\n");
+	printf("**** Bienvenue dans le channel %s %d****\n", channel_info.nom, channel_info.id);
+	printf("**************************************\n");
+	printf("* Tapez 'q:' pour quitter le channel\n");
+	
+	
+	while(fin == 0){
+		//demande le dernier message
+		r.instruction = 9;
+		if ((send(socket, &r, sizeof(r),0)) < 0) {
+			perror("erreur : impossible d'ecrire le message destine au serveur.");
+			exit(1);
+		}
+		//recoit le dernier 
+		if ((recv(socket, &newMess, sizeof(newMess),0)) > 0){
+			if(newMess.id != -1 && newMess.id != last_id_mess){
+				printf("%s\n", newMess.message);
+				last_id_mess = newMess.id;
+			}
+		}
+		
+		
+		scanf("%s", &temp_char);
+		if (strcmp(r.text, "q:") == 0) { //quitte le channel 
+			return 1; //retourne a la selection des channels 
+		}
+		else { // envoie message
+			r.instruction = 6;
+			strcpy(r.text, pseudo);
+			strcat(r.text, " :" );
+			strcat(r.text, temp_char);
+			//le texte et l'id channel est deja renseigné
+			if ((send(socket, &r, sizeof(r),0)) < 0) {
+				perror("erreur : impossible d'ecrire le message destine au serveur.");
+				exit(1);
+			}
+		}	
+	}
+	return 0;
+}
+
+int mode_selection_channel(int socket){
+	int fin = 0;
+	Channel newChan;
+	int user_action = -3; 
+	Requete r;
+	//Demande tout les channels deja existant
+	r.instruction = 5;
+	int nb_chan;
+	int last_id_chan;
+	
+	if ((send(socket, &r, sizeof(r),0)) < 0) {
+		perror("erreur : impossible d'ecrire le message destine au serveur.");
+		exit(1);
+	}
+	
+	if((recv(socket, &newChan, sizeof(newChan),0)) > 0 ){
+		nb_chan = newChan.nb_client;
+	}
+	
+	//recupère du serveur
+	for(int i = 0; i < nb_chan; i++){
+		if((recv(socket, &newChan, sizeof(newChan),0)) > 0 ){
+			printf("%d - %s\n", newChan.id, newChan.nom);
+			last_id_chan = newChan.id;
+		}
+	}
+	
+	printf("Entrer l'id du channel pour le rejoindre \n");
+	printf("Entrer -2 pour ajouter un channel\n");
+	printf("Entrer -1 pour quitter \n");
+	
+	while(fin == 0){
+		//demande le dernier channel ajouté
+		r.instruction = 4;
+		if ((send(socket, &r, sizeof(r),0)) < 0) { 
+			perror("erreur : impossible d'ecrire le message destine au serveur.");
+		}
+		//recois la reponse
+		if ((recv(socket, &newChan, sizeof(newChan),0)) > 0) {
+			if(newChan.id != -1){
+				printf("%d - %s\n", newChan.id, newChan.nom);
+			}
+		}
+	
+		scanf("%d", &user_action);
+		if(user_action > -3) {
+			if (user_action == -1) { // quitte l'app
+				fin_connection(socket);
+				exit(0);
+			}else if(user_action == -2){ // ajoute un channel
+				ajouter_channel(socket);
+			}
+			else{ //join un channel
+				r.instruction = 8;
+				r.id = user_action;
+				if ((send(socket, &r, sizeof(r),0)) < 0) { 
+					perror("erreur : impossible d'ecrire le message destine au serveur.");
+				}
+				
+				//assigne dans une variable globale pour acces plus tard 
+				int trouve = 0;
+				while(trouve == 0 ){
+					if ((recv(socket, &channel_info, sizeof(channel_info),0)) > 0) {
+						trouve = 1;
+						if(channel_info.id != -1){
+							return 2; // permet d'aller dans l'autre mode après 
+						}
+						else {
+							printf("Pas de channel avec cet id \n");
+						}
+					}
+				}
+			}
+		}
+		
+	}
+	return 0;
+}
+
+void creation_user(int socket, int *id_user) {
 	printf("Pseudo? \n");
 
 	Requete r;
@@ -263,7 +386,7 @@ const char* creation_user(int socket, int *id_user) {
 	r.id = -1;
 	scanf("%s", &r.text);
 
-	char pseudo[30];
+	
 	strcpy(pseudo, r.text);
 
   /* envoi du message vers le serveur */
@@ -280,8 +403,6 @@ const char* creation_user(int socket, int *id_user) {
 			*id_user = r.id;
 		}
 	}
-
-	return pseudo;
 }
 
 int main(int argc, char **argv) {
@@ -295,14 +416,10 @@ int main(int argc, char **argv) {
 	char *	prog; 			/* nom du programme */
 	char *	host; 			/* nom de la machine distante */
 	char *	mesg; 			/* message envoyé */
-	const char * pseudo; // pseudo de l'utilisateur
 
 	Message *listMessage = NULL; // messages du channel rejoind
 	//Channel *listChannel = NULL; // liste des channels
 	int id_user; //id de l'utilisateur
-
-	listChannel = (Channel*) malloc(sizeof(Channel));
-	channelChoisis = (Channel*) malloc(sizeof(Channel));
 
   if (argc != 2) {
 		perror("usage : client <adresse-serveur>");
@@ -346,42 +463,25 @@ int main(int argc, char **argv) {
 		exit(1);
   }
 
-  printf("connexion etablie avec le serveur. \n");
-
-  pseudo = creation_user(socket_descriptor, &id_user);
+	printf("connexion etablie avec le serveur. \n");
+	creation_user(socket_descriptor, &id_user);
 	printf("id user : %d \n", id_user);
-
-	printf("Action ?\n");
-	printf("0 - Quitter\n");
-	printf("1 - Ajouter channel\n");
-	printf("2 - Voir les channels\n");
-
-	int value_user;
-	scanf("%d", &value_user);
-
-	switch(value_user){
-		case 0:
-			fin_connection(socket_descriptor);
-			break;
-		case 1:
-			if(ajouter_channel(id_user,socket_descriptor) == 1)
-			{
-				printf("ajouter suite\n");
-			}
-			get_list_channel(socket_descriptor, id_user);
-			break;
-		case 2:
-			//afficher_channel(id_user, socket_descriptor);
-			get_list_channel(socket_descriptor, id_user);
-		break;
-		default: break;
+	
+	//lance la boucle
+	int action = mode_selection_channel(socket_descriptor);
+	while(action != 0){
+		switch(action){
+			case 1 : action = mode_selection_channel(socket_descriptor);break;
+			case 2 : action = mode_channel(socket_descriptor);break;
+			default : action = 0;
+		}
 	}
+	
+	printf("\nfin de la reception.\n");
 
-  printf("\nfin de la reception.\n");
+	close(socket_descriptor);
 
-  close(socket_descriptor);
+	printf("connexion avec le serveur fermee, fin du programme.\n");
 
-  printf("connexion avec le serveur fermee, fin du programme.\n");
-
-  exit(0);
+	exit(0);
 }
