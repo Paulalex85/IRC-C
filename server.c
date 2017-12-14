@@ -349,7 +349,7 @@ void envoyer_list_message(int id_channel , int socket) {
 		mess = mess->suiv;
 	}*/
 	
-	printf("test1");
+	//printf("test1");
 	//envoie le nombre de message a recevoir au client
 	/*message_infos.id = nb_message;
 	if ((send(socket, &message_infos, sizeof(message_infos),0)) < 0) {
@@ -423,8 +423,6 @@ void ajouter_message(int id_channel, char contenu[], int socket) {
 	  	}
 	  	client_to_send = client_to_send->suiv;
  	}
-
-	printf("test\n");
 }
 
 void get_last_channel(int last_channel, int sock) {

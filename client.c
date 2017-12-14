@@ -285,7 +285,7 @@ int mode_channel(int socket){
 	printf("**************************************\n");
 	printf("**** Bienvenue dans le channel %s %d****\n", channel_info.nom, channel_info.id);
 	printf("**************************************\n");
-	printf("* Tapez 'q:' pour quitter le channel\n");
+	printf("* Tapez 'quit' pour quitter le channel\n");
 	
 	
 	while(fin == 0){
@@ -302,14 +302,17 @@ int mode_channel(int socket){
 				last_id_mess = newMess.id;
 			}
 		}*/
-		
-		while(strcmp(temp_char, ":q") != 0) {
+		while(1) {
 			fgets(temp_char, sizeof(temp_char), stdin);
 			temp_char[strcspn(temp_char , "\n")] = '\0';
-			
+			if (strcmp(temp_char, "quit") == 0){
+				strcpy(temp_char, "");
+				pthread_exit(thread);
+				return 1;
+			}
 			r.instruction = 6;
 			strcpy(r.text, pseudo);
-			strcat(r.text, " :" );
+			strcat(r.text, " : " );
 			strcat(r.text, temp_char);
 			if ((send(socket, &r, sizeof(r),0)) < 0) {
 				perror("erreur : impossible d'ecrire le message destine au serveur.");
@@ -353,15 +356,21 @@ int mode_selection_channel(int socket){
 	printf("Entrer -1 pour quitter \n");
 	
 	while(fin == 0){
-		//demande le dernier channel ajouté
-		r.instruction = 4;
-		if ((send(socket, &r, sizeof(r),0)) < 0) { 
+		r.instruction = 5;
+		if ((send(socket, &r, sizeof(r),0)) < 0) {
 			perror("erreur : impossible d'ecrire le message destine au serveur.");
+			exit(1);
 		}
-		//recois la reponse
-		if ((recv(socket, &newChan, sizeof(newChan),0)) > 0) {
-			if(newChan.id != -1){
+	
+		if((recv(socket, &newChan, sizeof(newChan),0)) > 0 ){
+			nb_chan = newChan.nb_client;
+		}
+	
+		//recupère du serveur
+		for(int i = 0; i < nb_chan; i++){
+			if((recv(socket, &newChan, sizeof(newChan),0)) > 0 ){
 				printf("%d - %s\n", newChan.id, newChan.nom);
+				last_id_chan = newChan.id;
 			}
 		}
 	
