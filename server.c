@@ -55,7 +55,7 @@ typedef struct Requete { // struct a echanger avec client
 //variables globales ftw
 Client *listClient;
 Channel *listChannel;
-int nb_clients, nb_channels;
+int nb_clients, nb_channels, nb_messages;
 
 Client* get_client_by_socket(int sock){
 	Client* current = listClient;
@@ -74,6 +74,7 @@ Channel* get_channel_by_id(int id){
 	Channel* current = listChannel;
 	while(current != NULL){
 		if(current->id == id){
+			printf("Channel trouve");
 			return current;
 		}else{
 			current= current->suiv;
@@ -162,7 +163,6 @@ void creer_channel(char nom[], int socket)
 		new->suiv = listChannel; // on pointe le premier de la liste dans le suivant du nouveau
 		listChannel = new;
 	}
-	printf("ajout du channel %s ok\n", listChannel->nom);
 
 	//envoie au client
 	Requete r;
@@ -245,9 +245,16 @@ void supprimer_channel(int id_channel)
 	}
 }
 
-// SEGMENTATION FAULT SUR MAC MAIS PAS LINUX CE QUI FAIT PLANTER LE PROG QUE SUR MAC
 void send_channels(int socket_descriptor) {
 	Channel *courant = listChannel;
+	Channel infos_chan;
+	infos_chan.nb_client = nb_channels;
+	
+	//permet de savoir combien de channel sont existant
+	if ((send(socket_descriptor, &infos_chan, sizeof(infos_chan),0)) < 0) {
+		perror("erreur : impossible d'ecrire le message destine au client.");
+		exit(1);
+	}
 
 	printf("**************************************\n");
 	printf("********* Channels existants *********\n");
@@ -309,12 +316,84 @@ void rejoindre_channel(int sock, int id_channel) {
 			courant_chan = courant_chan->suiv;
 		}
 	}
+	
+	if(courant_chan == NULL){
+		Channel channel_vide;
+		channel_vide.id = -1;
+		if ((send(sock, &channel_vide, sizeof(channel_vide),0)) < 0) {
+			perror("erreur : impossible d'ecrire le message destine au client.");
+			exit(1);
+		}
+	}
+	else{
+		//envoie les infos du channel au client
+		if ((send(sock, courant_chan, sizeof(*courant_chan),0)) < 0) {
+			perror("erreur : impossible d'ecrire le message destine au client.");
+			exit(1);
+		}
+	}
+}
 
-	//envoie les infos du channel au client
-	if ((send(sock, courant_chan, sizeof(*courant_chan),0)) < 0) {
+void envoyer_list_message(int id_channel , int socket) {
+	int nb_message = 0;
+	Channel* current = listChannel;
+	Message* mess;
+	Message message_infos;
+	Message* aux;
+//on cherche le channel
+	/*current = get_channel_by_id(id_channel);
+	mess = current->listMessage;*/
+	//une fois cela fait on parcour la liste pour avoir le nombre de message dans la liste
+	/*while(mess != NULL){
+		nb_message++;
+		mess = mess->suiv;
+	}*/
+	
+	printf("test1");
+	//envoie le nombre de message a recevoir au client
+	/*message_infos.id = nb_message;
+	if ((send(socket, &message_infos, sizeof(message_infos),0)) < 0) {
 		perror("erreur : impossible d'ecrire le message destine au client.");
 		exit(1);
 	}
+	printf("test2");
+	mess = current->listMessage;
+	int compteur_aux;
+	//on remonte la liste et envoie tout les messages
+	while(nb_message > 0){
+		compteur_aux = 1;
+		while (compteur_aux != nb_message){
+			compteur_aux++;
+			mess = mess->suiv;
+		}
+		if ((send(socket,mess, sizeof(*mess),0)) < 0) {
+			perror("erreur : impossible d'ecrire le message destine au client.");
+			exit(1);
+		}
+		mess = current->listMessage;
+		nb_message--;
+	}*/
+			
+
+}
+
+void get_last_message(int id_channel , int sock){
+	Channel*current = get_channel_by_id(id_channel);
+	Message mess;
+	if(current->listMessage == NULL )
+	{
+		mess.id = -1;
+	}
+	else
+	{
+		mess.id = current->listMessage->id;
+		strcpy(mess.message,current->listMessage->message);
+	}
+	
+	if ((send(sock, &mess, sizeof(mess),0)) < 0) {
+		perror("erreur : impossible d'ecrire le message destine au client.");
+		exit(1);
+  	}
 }
 
 void ajouter_message(int id_channel, char contenu[], int socket) {
@@ -323,6 +402,8 @@ void ajouter_message(int id_channel, char contenu[], int socket) {
 	Message* newMessage = (Message*) malloc(sizeof(Message));
 	//copie des infos dans le message
 	strcpy(newMessage->message, contenu);
+	nb_messages++;
+	newMessage->id = nb_messages;
 	
 	//ajout du message dans la liste
 	Message* list_message = current_chan->listMessage;
@@ -346,6 +427,24 @@ void ajouter_message(int id_channel, char contenu[], int socket) {
 	printf("test\n");
 }
 
+void get_last_channel(int last_channel, int sock) {
+	Channel chan;
+	if(listChannel == NULL || listChannel->id == last_channel)
+	{
+		chan.id = -1;
+	}
+	else
+	{
+		chan.id = listChannel->id;
+		strcpy(chan.nom,listChannel->nom);
+	}
+	
+	if ((send(sock, &chan, sizeof(chan),0)) < 0) {
+		perror("erreur : impossible d'ecrire le message destine au client.");
+		exit(1);
+  	}
+}
+
 void supprimer_message(Message *list) //supprime le premier de la liste
 {
 	Message *aux = list;
@@ -355,7 +454,7 @@ void supprimer_message(Message *list) //supprime le premier de la liste
 
 /*------------------------------------------------------*/
 void *gestion_message (void * arg) {
-//int sock
+	//int sock
 	void** realData = (void**)arg;
 	void* p1 = realData[0];
 
@@ -375,6 +474,9 @@ void *gestion_message (void * arg) {
 				case 2:
 					creer_channel(r.text, sock);
 					break;
+				case 4:
+					get_last_channel(r.id,sock);
+					break;
 				case 5:
 					send_channels(sock);
 					 break;
@@ -388,6 +490,12 @@ void *gestion_message (void * arg) {
 					break;
 				case 8:
 					rejoindre_channel(sock, r.id);
+					break;
+				case 9:
+					get_last_message(r.id, sock);
+					break;
+				case 10:
+					envoyer_list_message(r.id,sock);
 					break;
 				default:
 					i = 0;
@@ -415,10 +523,9 @@ int main(int argc, char **argv) {
 	gethostname(machine,TAILLE_MAX_NOM);		/* recuperation du nom de la machine */
 
 	//init variables globales
-	listClient = (Client*) malloc(sizeof(Client));
-	listChannel = (Channel*) malloc(sizeof(Channel));
 	nb_channels = 0;
 	nb_clients = 0;
+	nb_messages = 0;
 
   /* recuperation de la structure d'adresse en utilisant le nom */
 	if ((ptr_hote = gethostbyname("127.0.0.1")) == NULL) {
