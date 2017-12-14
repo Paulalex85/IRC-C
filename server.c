@@ -273,26 +273,65 @@ void send_channels(int socket_descriptor) {
 }
 
 void rejoindre_channel(int sock, int id_channel) {
-	Channel *courant_chan = listChannel;
-	// Ajouter le client au channel VOULU
-	while (courant_chan != NULL) {
-		if(courant_chan->id == id_channel) {//trouve
-			
-			break;
-		} else {
-			courant_chan = courant_chan->suiv;
+	Client* courant_cli = get_client_by_socket(sock);
+ 
+ 	Channel *courant_chan = listChannel;
+ 	// Ajouter le client au channel VOULU
+ 	while (courant_chan != NULL) {
+ 		if(courant_chan->id == id_channel) {//trouve
+ 		
+ 			//Supprime le client de la liste principale
+ 			Client* aux = listClient;
+ 			Client* pre;
+ 			if( aux->socket == courant_cli->socket){//verifie le premier
+ 				listClient = courant_cli->suiv;
+ 			}
+ 			else{
+ 				pre = aux;
+ 				aux = aux->suiv;
+ 				while(aux != NULL){
+ 					if(aux->socket == courant_cli->socket){//trouve
+ 						pre->suiv = aux->suiv; //saute de la liste
+ 						break;
+ 					}
+ 					else {
+ 						pre = aux;
+ 						aux = aux->suiv;
+ 					}
+ 				}
+ 			}
+ 			
+ 			//ajoute le client au channel
+ 			Client* list_client_chan = courant_chan->list_client;
+ 			if(list_client_chan ==NULL){
+ 				courant_chan->list_client = courant_cli;
+ 			}else{//insertion tete
+ 				courant_cli->suiv = courant_chan->list_client;
+ 				courant_chan->list_client = courant_cli;
+ 			}
+ 			courant_chan->nb_client++;
+ 			printf("%s a rejoint le channel %s\n",courant_cli->pseudo, courant_chan->nom);
+ 			break;
+ 		} else {
+ 			courant_chan = courant_chan->suiv;
+ 		}
+ 	}
+	
+	if(courant_chan == NULL){
+		Channel channel_vide;
+		channel_vide.id = -1;
+		if ((send(sock, &channel_vide, sizeof(channel_vide),0)) < 0) {
+			perror("erreur : impossible d'ecrire le message destine au client.");
+			exit(1);
 		}
 	}
-	if ((send(sock, courant_chan, sizeof(*courant_chan),0)) < 0) {
-		perror("erreur : impossible d'ecrire le message destine au client.");
-		exit(1);
+	else{
+		//envoie les infos du channel au client
+		if ((send(sock, courant_chan, sizeof(*courant_chan),0)) < 0) {
+			perror("erreur : impossible d'ecrire le message destine au client.");
+			exit(1);
+		}
 	}
-	/*Channel channel_vide;
-	channel_vide.id = -1;
-	if ((send(sock, &channel_vide, sizeof(channel_vide),0)) < 0) {
-		perror("erreur : impossible d'ecrire le message destine au client.");
-		exit(1);
-	}*/
 }
 
 void envoyer_list_message(int id_channel , int socket) {

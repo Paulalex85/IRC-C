@@ -13,6 +13,7 @@ client <adresse-serveur>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <string.h>
+#include <pthread.h>
 
 typedef struct sockaddr 	sockaddr;
 typedef struct sockaddr_in 	sockaddr_in;
@@ -52,6 +53,20 @@ typedef struct Requete { // struct a echanger avec client
 Channel *listChannel;
 Channel channel_info;
 char pseudo[30];
+
+static void* ecoute(void * arg){
+	void** realData = (void**)arg;
+	void* p1 = realData[0];
+
+	int socket = *(int*)p1;
+	
+	while(1){
+		Message mess;
+		if ((recv(socket, &mess, sizeof(mess),0)) > 0) {
+			printf("%s\n", mess.message);
+		}
+	}
+} 
 
 int ajouter_channel(int socket) { // retourne id channel
 	Requete r;
@@ -258,6 +273,15 @@ int mode_channel(int socket){
 	
 	Message newMess;
 	
+	//creation du thread d ecoute
+	pthread_t thread;
+	void *ptr[1];
+	ptr[0] = &socket;
+
+	if (pthread_create(&thread, NULL, ecoute, ptr) == -1){
+		perror("pthread_create");
+	}
+	
 	printf("**************************************\n");
 	printf("**** Bienvenue dans le channel %s %d****\n", channel_info.nom, channel_info.id);
 	printf("**************************************\n");
@@ -266,7 +290,7 @@ int mode_channel(int socket){
 	
 	while(fin == 0){
 		//demande le dernier message
-		r.instruction = 9;
+		/*r.instruction = 9;
 		if ((send(socket, &r, sizeof(r),0)) < 0) {
 			perror("erreur : impossible d'ecrire le message destine au serveur.");
 			exit(1);
@@ -277,24 +301,22 @@ int mode_channel(int socket){
 				printf("%s\n", newMess.message);
 				last_id_mess = newMess.id;
 			}
-		}
+		}*/
 		
-		
-		scanf("%s", &temp_char);
-		if (strcmp(r.text, "q:") == 0) { //quitte le channel 
-			return 1; //retourne a la selection des channels 
-		}
-		else { // envoie message
+		while(strcmp(temp_char, ":q") != 0) {
+			fgets(temp_char, sizeof(temp_char), stdin);
+			temp_char[strcspn(temp_char , "\n")] = '\0';
+			
 			r.instruction = 6;
 			strcpy(r.text, pseudo);
 			strcat(r.text, " :" );
 			strcat(r.text, temp_char);
-			//le texte et l'id channel est deja renseigné
 			if ((send(socket, &r, sizeof(r),0)) < 0) {
 				perror("erreur : impossible d'ecrire le message destine au serveur.");
 				exit(1);
 			}
-		}	
+		}
+		
 	}
 	return 0;
 }
